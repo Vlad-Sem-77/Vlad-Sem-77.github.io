@@ -1,0 +1,2728 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1208">
+<title>LexBreax</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IM+Fell+English&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#1a1208;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    min-height:100vh;
+    font-family:'IM Fell English',serif;
+    overflow:hidden;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+    touch-action:none;
+  }
+  h1 {
+    font-family:'Playfair Display',serif;
+    color:#c9a84c; font-size:clamp(1.2rem,4vw,2rem);
+    letter-spacing:0.08em; text-shadow:0 0 20px #c9a84c88;
+    margin-bottom:6px;
+  }
+  .subtitle { color:#7a6a4a; font-size:clamp(0.6rem,2vw,0.82rem); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:8px; }
+  #gameWrap { position:relative; width:min(520px,98vw); }
+  canvas { display:block; width:100%; height:auto; border:2px solid #3a2e1a; border-radius:4px;
+    box-shadow:0 0 0 1px #c9a84c44, 0 0 40px #c9a84c22; background:#12100a;
+    will-change:transform; }
+  #hud { display:flex; justify-content:space-between; align-items:center;
+    width:100%; padding:5px 4px; color:#c9a84c;
+    font-size:clamp(0.72rem,2.4vw,0.95rem); letter-spacing:0.05em; }
+  #message { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    text-align:center; pointer-events:none; }
+  #message h2 { font-family:'Playfair Display',serif; font-size:clamp(1.3rem,5vw,2.1rem);
+    color:#c9a84c; text-shadow:0 0 30px #c9a84c; line-height:1.2; }
+  #message p { color:#8a7a5a; font-size:clamp(0.68rem,2vw,0.88rem); margin-top:9px; letter-spacing:0.14em; }
+  #startBtn { margin-top:16px; padding:9px 28px; background:transparent;
+    border:1px solid #c9a84c; color:#c9a84c; font-family:'Playfair Display',serif;
+    font-size:clamp(0.78rem,2.4vw,0.96rem); letter-spacing:0.14em;
+    cursor:pointer; transition:all 0.2s; pointer-events:all; }
+  #startBtn:hover,#startBtn:focus { background:#c9a84c22; box-shadow:0 0 20px #c9a84c44; outline:1px solid #c9a84c88; }
+  /* ── Ползунок управления ── */
+  #padControl {
+    width:100%; margin-top:6px;
+    display:flex; align-items:center; gap:8px;
+  }
+  #padControl span { color:#3a2a14; font-size:0.7rem; flex-shrink:0; user-select:none; }
+  #padSlider {
+    flex:1; -webkit-appearance:none; appearance:none;
+    height:28px; background:transparent; cursor:pointer;
+    touch-action:none;
+  }
+  #padSlider::-webkit-slider-runnable-track {
+    height:6px; border-radius:3px;
+    background:linear-gradient(to right,#3a2a14,#c9a84c44,#3a2a14);
+    border:1px solid #4a3a1a;
+  }
+  #padSlider::-moz-range-track {
+    height:6px; border-radius:3px;
+    background:linear-gradient(to right,#3a2a14,#c9a84c44,#3a2a14);
+    border:1px solid #4a3a1a;
+  }
+  #padSlider::-webkit-slider-thumb {
+    -webkit-appearance:none; appearance:none;
+    width:48px; height:48px; border-radius:50%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cdefs%3E%3CradialGradient id='bg' cx='50%25' cy='45%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23fff8e8'/%3E%3Cstop offset='70%25' stop-color='%23f0d898'/%3E%3Cstop offset='100%25' stop-color='%23c8900a'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='24' cy='24' r='23' fill='url(%23bg)' stroke='%23802000' stroke-width='2'/%3E%3Cg fill='none' stroke='%23501000' stroke-linecap='round'%3E%3C!-- центральная петля --%3E%3Cellipse cx='24' cy='22' rx='3' ry='4' stroke-width='1.8'/%3E%3Cellipse cx='24' cy='22' rx='5.5' ry='6.5' stroke-width='1.6'/%3E%3Cellipse cx='24' cy='22' rx='8' ry='9' stroke-width='1.5'/%3E%3Cellipse cx='24' cy='22' rx='10.5' ry='11.5' stroke-width='1.4'/%3E%3Cellipse cx='24' cy='22' rx='13' ry='14' stroke-width='1.3'/%3E%3C!-- верхние дуги над петлёй --%3E%3Cpath d='M18 10 Q24 6 30 10' stroke-width='1.5'/%3E%3Cpath d='M15 13 Q24 8 33 13' stroke-width='1.4'/%3E%3Cpath d='M13 16 Q24 10 35 16' stroke-width='1.3'/%3E%3C!-- боковые линии --%3E%3Cpath d='M10 22 Q10 30 13 36' stroke-width='1.3'/%3E%3Cpath d='M38 22 Q38 30 35 36' stroke-width='1.3'/%3E%3Cpath d='M11 27 Q12 33 15 38' stroke-width='1.2'/%3E%3Cpath d='M37 27 Q36 33 33 38' stroke-width='1.2'/%3E%3C!-- нижние дуги --%3E%3Cpath d='M15 38 Q24 43 33 38' stroke-width='1.4'/%3E%3Cpath d='M17 41 Q24 45 31 41' stroke-width='1.3'/%3E%3C/g%3E%3C/svg%3E");
+    background-size:48px 48px;
+    background-color:#f0d898;
+    border:2.5px solid #802000;
+    box-shadow:0 0 12px #c9a84caa, 0 2px 6px rgba(0,0,0,0.5);
+    margin-top:-21px;
+    cursor:grab;
+  }
+  #padSlider::-moz-range-thumb {
+    width:48px; height:48px; border-radius:50%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cdefs%3E%3CradialGradient id='bg' cx='50%25' cy='45%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23fff8e8'/%3E%3Cstop offset='70%25' stop-color='%23f0d898'/%3E%3Cstop offset='100%25' stop-color='%23c8900a'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='24' cy='24' r='23' fill='url(%23bg)' stroke='%23802000' stroke-width='2'/%3E%3Cg fill='none' stroke='%23501000' stroke-linecap='round'%3E%3C!-- центральная петля --%3E%3Cellipse cx='24' cy='22' rx='3' ry='4' stroke-width='1.8'/%3E%3Cellipse cx='24' cy='22' rx='5.5' ry='6.5' stroke-width='1.6'/%3E%3Cellipse cx='24' cy='22' rx='8' ry='9' stroke-width='1.5'/%3E%3Cellipse cx='24' cy='22' rx='10.5' ry='11.5' stroke-width='1.4'/%3E%3Cellipse cx='24' cy='22' rx='13' ry='14' stroke-width='1.3'/%3E%3C!-- верхние дуги над петлёй --%3E%3Cpath d='M18 10 Q24 6 30 10' stroke-width='1.5'/%3E%3Cpath d='M15 13 Q24 8 33 13' stroke-width='1.4'/%3E%3Cpath d='M13 16 Q24 10 35 16' stroke-width='1.3'/%3E%3C!-- боковые линии --%3E%3Cpath d='M10 22 Q10 30 13 36' stroke-width='1.3'/%3E%3Cpath d='M38 22 Q38 30 35 36' stroke-width='1.3'/%3E%3Cpath d='M11 27 Q12 33 15 38' stroke-width='1.2'/%3E%3Cpath d='M37 27 Q36 33 33 38' stroke-width='1.2'/%3E%3C!-- нижние дуги --%3E%3Cpath d='M15 38 Q24 43 33 38' stroke-width='1.4'/%3E%3Cpath d='M17 41 Q24 45 31 41' stroke-width='1.3'/%3E%3C/g%3E%3C/svg%3E");
+    background-size:48px 48px;
+    background-color:#f0d898;
+    border:2.5px solid #802000;
+    box-shadow:0 0 12px #c9a84caa, 0 2px 6px rgba(0,0,0,0.5);
+    cursor:grab;
+  }
+  #padSlider:active::-webkit-slider-thumb { cursor:grabbing; filter:brightness(0.92); }
+  #padSlider:active::-moz-range-thumb     { cursor:grabbing; filter:brightness(0.92); }
+  #padSlider { height:52px; }
+  /* ── Dev panel ── */
+  #devPanel {
+    display:none;
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    background:rgba(14,10,4,0.97);
+    border:1px solid #c9a84c88;
+    border-radius:8px;
+    padding:18px 22px;
+    z-index:100;
+    text-align:center;
+    min-width:220px;
+  }
+  #devPanel p {
+    color:#c9a84c;
+    font-family:'Playfair Display',serif;
+    font-size:0.9rem;
+    margin-bottom:12px;
+    letter-spacing:0.1em;
+  }
+  .devBtn {
+    display:inline-block;
+    margin:4px;
+    padding:7px 14px;
+    background:transparent;
+    border:1px solid #c9a84c66;
+    color:#c9a84c;
+    font-family:'IM Fell English',serif;
+    font-size:0.85rem;
+    cursor:pointer;
+    border-radius:4px;
+    transition:background 0.15s;
+  }
+  .devBtn:hover, .devBtn:active {
+    background:#c9a84c22;
+    border-color:#c9a84c;
+  }
+  #devClose {
+    margin-top:12px;
+    display:block;
+    color:#4a3a1a;
+    font-size:0.75rem;
+    cursor:pointer;
+    letter-spacing:0.1em;
+  }
+</style>
+</head>
+<body>
+<h1 id="devTrigger" title="Долгий тап — выбор уровня">⚖ LexBreax</h1>
+<div id="devPanel">
+  <p>🛠 Выбрать уровень</p>
+  <div id="devBtns"></div>
+  <span id="devClose" onclick="closeDevPanel()">✕ закрыть</span>
+</div>
+<div class="subtitle">Адвокат против бумажных Кодексов</div>
+<div id="gameWrap">
+  <div id="hud">
+    <span>Счёт: <b id="scoreVal">0</b></span>
+    <span>Жизни: <span id="livesVal">❤️❤️❤️</span></span>
+    <span>Уровень: <b id="levelVal">1</b></span>
+  </div>
+  <canvas id="c" width="520" height="580" role="img" aria-label="LexBreax"></canvas>
+  <!-- Ползунок управления платформой -->
+  <div id="padControl">
+    <span>◀</span>
+    <input type="range" id="padSlider" min="0" max="1000" value="500"
+      aria-label="Управление адвокатом">
+    <span>▶</span>
+  </div>
+  <div id="message" role="status" aria-live="polite">
+    <h2>⚖ LexBreax</h2>
+    <p>Разбей все кодексы!</p>
+    <button id="startBtn" onclick="startGame()">НАЧАТЬ ДЕЛО</button>
+  </div>
+</div>
+<script>
+// ═══════════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════════
+// ── Telegram Mini App инициализация ──────────────────
+if(window.Telegram && window.Telegram.WebApp){
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand(); // на весь экран
+  tg.disableClosingConfirmation();
+}
+
+const W=520, H=580;
+const PAD_W=88, PAD_Y=H-52;
+const BALL_R=9;
+const COLS=8, ROWS=5;
+const BW=52, BH=30, BPAD=6;
+const BOFF_X=(W-(COLS*(BW+BPAD)-BPAD))/2;
+const BOFF_Y=52;
+const BALL_BASE=3.8, BALL_PER_LVL=0.4;
+const PAD_ACCEL=3.5, PAD_MAX=9, PAD_FRIC=0.78;
+const MOUSE_LERP=0.13;
+
+// Книги-эмодзи: каждая — свой символ, цвет свечения, подпись
+const BOOK_TYPES=[
+  {emoji:'📕', label:'УК РФ',  glow:'#ff5555'},
+  {emoji:'📘', label:'ГК РФ',  glow:'#5599ff'},
+  {emoji:'📗', label:'НК РФ',  glow:'#55dd77'},
+  {emoji:'📙', label:'АПК',    glow:'#ffaa44'},
+  {emoji:'📔', label:'УПК',    glow:'#ff88cc'},
+  {emoji:'📓', label:'ТК РФ',  glow:'#aaffaa'},
+  {emoji:'📒', label:'ЖК РФ',  glow:'#ffdd55'},
+  {emoji:'📚', label:'КОНСТ.', glow:'#cc88ff'},
+];
+
+// ═══════════════════════════════════════════════════════
+//  CANVAS
+// ═══════════════════════════════════════════════════════
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    r=Math.min(r,w/2,h/2);
+    this.beginPath();
+    this.moveTo(x+r,y); this.lineTo(x+w-r,y); this.arcTo(x+w,y,x+w,y+r,r);
+    this.lineTo(x+w,y+h-r); this.arcTo(x+w,y+h,x+w-r,y+h,r);
+    this.lineTo(x+r,y+h); this.arcTo(x,y+h,x,y+h-r,r);
+    this.lineTo(x,y+r); this.arcTo(x,y,x+r,y,r);
+    this.closePath(); return this;
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let score=0,lives=3,level=1;
+let gameRunning=false,paused=false,animId=null;
+let padX=W/2-PAD_W/2, padSpeed=0;
+let mouseTarget=null;
+
+// balls — массив шаров (поддержка двух)
+let balls=[];
+// drops — падающие призы
+let drops=[];
+// bricks
+let bricks=[];
+// particles
+let particles=[];
+let shakeTimer=0;
+const keys={};
+
+// Анимация рук при броске
+let armAnim = { side: 0, t: 1 };
+// side: -1 = левая рука бросает, +1 = правая, 0 = покой
+// t: 0..1 — прогресс цикла (1 = завершено)
+
+// ── Уровень 2 (нет доп. стейта, форма задаётся в initBricks)
+// ── Уровень 3
+let lvl3Time=0;
+// ── Уровень 4
+let lvl4Timer=null;
+// ── Уровень 5
+let lvl5HideTimer=null, lvl5ShowTimer=null, lvl5Hidden=[];
+// ── Уровень 6
+let lvl6Timer=null, lvl6DropOffset=0;
+// ── Уровень 7
+let lvl7Timer=null, lvl7DestroyedCount=0, lvl7Teleporting=false;
+// Все ячейки сетки уровня 7 (включая пустые)
+let lvl7AllCells=[];
+// Анимация телепортации: массив {x,y,alpha,phase} для кляксы
+let lvl7Blobs=[];
+// ── Уровень 8
+let lvl8ImmuneSide=null;
+let lvl8ImmuneTimer=null;
+// ── Уровень 9
+// Сетка 8x5: grid9[r][c] = true если ячейка занята
+let grid9=[];          // 2D массив занятости
+let lvl9SpawnQueue=[];
+// ── Уровень 9 — туман войны
+let lvl9Fog=[];        // массив {x,y,alpha,decay} пятен тумана
+let lvl9Reveals=[];    // массив {x,y,r,life} — рассеянные зоны
+// ── Уровень 10
+let lvl10Phase=1;        // 1=сейф, 2=книги
+let lvl10Hits=0;         // попаданий по сейфу (нужно 15)
+const LVL10_MAX_HITS=15;
+// Геометрия сейфа (вычисляется при init)
+let lvl10Safe={x:0,y:0,w:0,h:0};
+// Анимация открытия сейфа
+let lvl10OpenAnim=0;     // 0=закрыт, >0=открывается (0..1)
+let lvl10OpenTimer=null;
+
+// ═══════════════════════════════════════════════════════
+//  INPUT
+// ═══════════════════════════════════════════════════════
+document.addEventListener('keydown',onKeyDown);
+document.addEventListener('keyup',e=>{keys[e.key]=false;});
+canvas.addEventListener('mousemove',onMouseMove);
+canvas.addEventListener('mouseleave',()=>{mouseTarget=null;});
+canvas.addEventListener('click',onCanvasClick);
+canvas.addEventListener('touchmove',onTouchMove,{passive:false});
+canvas.addEventListener('touchstart',onTouchStart);
+
+function onKeyDown(e){
+  keys[e.key]=true;
+  if((e.key===' '||e.key==='Enter')&&gameRunning&&!paused){
+    balls.forEach(b=>{if(b.stuck)b.stuck=false;});
+  }
+  if(e.key==='p'||e.key==='P') togglePause();
+}
+function onMouseMove(e){
+  const rect=canvas.getBoundingClientRect();
+  mouseTarget=(e.clientX-rect.left)*(W/rect.width);
+}
+function onCanvasClick(){
+  if(gameRunning&&!paused) balls.forEach(b=>{if(b.stuck)b.stuck=false;});
+}
+function onTouchMove(e){
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  mouseTarget=(e.touches[0].clientX-rect.left)*(W/rect.width);
+}
+function onTouchStart(){
+  if(gameRunning&&!paused) balls.forEach(b=>{if(b.stuck)b.stuck=false;});
+}
+function togglePause(){ if(!gameRunning)return; paused=!paused; if(!paused)loop(); }
+
+// ── Ползунок управления ──────────────────────────────
+const padSlider = document.getElementById('padSlider');
+let sliderActive = false;
+
+function sliderToPadX(val){
+  // val 0..1000 → padX 0..W-PAD_W
+  return (val/1000) * (W - PAD_W);
+}
+function padXToSlider(px){
+  return Math.round((px / (W - PAD_W)) * 1000);
+}
+
+padSlider.addEventListener('input', ()=>{
+  if(!gameRunning) return;
+  mouseTarget = null; // отключаем мышь пока тащим ползунок
+  padX = sliderToPadX(parseInt(padSlider.value));
+  padSpeed = 0;
+});
+padSlider.addEventListener('pointerdown', ()=>{ sliderActive=true; });
+padSlider.addEventListener('pointerup',   ()=>{ sliderActive=false; });
+
+// Двойное нажатие на кружок — запуск игры или броска
+let sliderLastTap = 0;
+padSlider.addEventListener('pointerdown', ()=>{
+  const now = Date.now();
+  if(now - sliderLastTap < 350){
+    if(!gameRunning){
+      startGame();
+    } else if(!paused){
+      balls.forEach(b=>{ if(b.stuck) b.stuck=false; });
+    }
+    sliderLastTap = 0;
+  } else {
+    sliderLastTap = now;
+  }
+});
+
+// Синхронизировать ползунок с padX каждый кадр (обновляем в draw)
+function syncSlider(){
+  if(!sliderActive) padSlider.value = padXToSlider(padX);
+}
+
+// ═══════════════════════════════════════════════════════
+//  BRICKS — каждый кирпич имеет свой уникальный цвет
+// ═══════════════════════════════════════════════════════
+// Перемешать массив (Fisher-Yates)
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// Выбрать 4 индекса, разнесённых (не соседи)
+function pick4Spread(total,cols){
+  const all=shuffle([...Array(total).keys()]);
+  const chosen=[];
+  for(const idx of all){
+    if(chosen.length===4) break;
+    const r=Math.floor(idx/cols), c=idx%cols;
+    const tooClose=chosen.some(i=>{
+      const dr=Math.abs(Math.floor(i/cols)-r);
+      const dc=Math.abs((i%cols)-c);
+      return dr<=1&&dc<=1;
+    });
+    if(!tooClose) chosen.push(idx);
+  }
+  while(chosen.length<4) chosen.push(all[chosen.length]);
+  return chosen;
+}
+
+// Строим список ячеек для уровня:
+// level 1,3,4,5 — стандартная сетка COLS×ROWS
+// level 2 — перевёрнутый треугольник: строка 0 = COLS колонн, каждая следующая на 1 меньше
+function buildLayout(){
+  const cells=[]; // {r,c,col_count,row} для каждой ячейки
+  if(level===2){
+    // Ряд 0 = 8 книг (всё поле), ряд 1 = 7, ..., ряд 5 = 3 (минимум 3)
+    const rowCounts=[8,7,6,5,4]; // 5 рядов, убывает
+    for(let r=0;r<rowCounts.length;r++){
+      const cnt=rowCounts[r];
+      const totalW=cnt*(BW+BPAD)-BPAD;
+      const startX=(W-totalW)/2;
+      for(let c=0;c<cnt;c++){
+        cells.push({r,c,startX,row_count:cnt});
+      }
+    }
+  } else if(level===7){
+    for(let r=0;r<ROWS;r++)
+      for(let c=0;c<COLS;c++)
+        if((r+c)%2===0)
+          cells.push({r,c,startX:BOFF_X,row_count:COLS});
+  } else if(level===8){
+    // Два ромба (5 рядов: 1-2-3-2-1 книги)
+    // Ромб центрирован: левый центр X, правый центр X
+    // Зазор между ромбами = 1 ширина книги
+    const rShape = [1,2,3,2,1]; // кол-во книг в каждом ряду ромба
+    const gap = BW + BPAD;      // зазор = 1 книга
+    // Общая ширина ромба = 3*(BW+BPAD)-BPAD
+    const rhW = 3*(BW+BPAD)-BPAD;
+    // Левый ромб: правый край = W/2 - gap/2
+    const leftRight = W/2 - gap/2;
+    const leftLeft  = leftRight - rhW;
+    const leftCX    = (leftLeft + leftRight) / 2;
+    // Правый ромб: левый край = W/2 + gap/2
+    const rightLeft = W/2 + gap/2;
+    const rightCX   = rightLeft + rhW/2;
+
+    for(let r=0;r<rShape.length;r++){
+      const cnt = rShape[r];
+      // Левый ромб — центрируем cnt книг относительно leftCX
+      const lW = cnt*(BW+BPAD)-BPAD;
+      const lStartX = leftCX - lW/2;
+      for(let c=0;c<cnt;c++){
+        cells.push({r, c, startX:lStartX, row_count:cnt, side:'left', diamond:true});
+      }
+      // Правый ромб
+      const rW = cnt*(BW+BPAD)-BPAD;
+      const rStartX = rightCX - rW/2;
+      for(let c=0;c<cnt;c++){
+        cells.push({r, c, startX:rStartX, row_count:cnt, side:'right', diamond:true});
+      }
+    }
+  } else if(level===9){
+    // Стандартная сетка 8×5
+    for(let r=0;r<ROWS;r++)
+      for(let c=0;c<COLS;c++)
+        cells.push({r,c,startX:BOFF_X,row_count:COLS});
+  } else if(level===10){
+    for(let r=0;r<ROWS;r++)
+      for(let c=2;c<6;c++)
+        cells.push({r,c,startX:BOFF_X,row_count:COLS});
+  } else if(level===15){
+    cells.push({r:2, c:3, startX:BOFF_X, row_count:COLS});
+  } else {
+    for(let r=0;r<ROWS;r++)
+      for(let c=0;c<COLS;c++)
+        cells.push({r,c,startX:BOFF_X,row_count:COLS});
+  }
+  return cells;
+}
+
+function initBricks(){
+  bricks=[];
+  const cells=buildLayout();
+  const total=cells.length;
+
+  // Ровно 4 файла: 2×twin + 2×fire, разнесённые
+  const fileIdx = (level===15) ? []
+               : (level===10) ? pick4Spread(total,8).slice(0,2)
+               : pick4Spread(total,8);
+  const prizes  = (level===15) ? []
+               : (level===10) ? shuffle(['twin','fire'])
+               : shuffle(['twin','twin','fire','fire']);
+
+  // Уровень 8: разноцветные книги, нет призов
+  cells.forEach((cell,idx)=>{
+    const isFile = (level!==8 && level!==15) && fileIdx.includes(idx);
+    const book = level===8
+      ? BOOK_TYPES[(cell.r * 3 + (cell.side==='right'?4:0)) % BOOK_TYPES.length]
+      : isFile
+        ? {emoji:'📁', label:'ДЕЛО', glow:'#88ccff'}
+        : BOOK_TYPES[(cell.c+cell.r*3)%BOOK_TYPES.length];
+    const hp=1;
+    const bx=cell.startX+cell.c*(BW+BPAD);
+    const by=BOFF_Y+cell.r*(BH+BPAD);
+    bricks.push({
+      x:bx, y:by, baseX:bx,
+      w:BW, h:BH,
+      book, hp, maxHp:hp, alive:true, hit:0,
+      isFile: isFile,
+      side: cell.side||null,
+      prize: (level!==8 && level!==15 && isFile) ? prizes[fileIdx.indexOf(idx)] : null,
+      prizeShown:false,
+      hidden:false,
+      shakePhase:0,
+      swingAngle:0,
+      swingDir:1,
+      falling:false,
+      fallVy:0,
+      fadeOut:0,
+      fadeIn:0,
+      lvl9r: cell.r,
+      lvl9c: cell.c,
+    });
+  });
+
+  // Уровень 7: запомнить все 40 ячеек сетки (занятые + пустые)
+  if(level===7){
+    lvl7AllCells=[];
+    for(let r=0;r<ROWS;r++)
+      for(let c=0;c<COLS;c++)
+        lvl7AllCells.push({
+          x:BOFF_X+c*(BW+BPAD),
+          y:BOFF_Y+r*(BH+BPAD),
+          baseX:BOFF_X+c*(BW+BPAD),
+        });
+  }
+  // Все уровни кроме 7 — книги сразу видны (fadeIn=1)
+  if(level!==7){
+    bricks.forEach(b=>{ b.fadeIn=1; });
+  }
+
+  // Уровень 9 — инициализировать grid9
+  if(level===15){
+    grid9=[];
+    for(let r=0;r<ROWS;r++){
+      grid9.push(new Array(COLS).fill(false));
+    }
+    grid9[2][3]=true;
+    lvl9SpawnQueue=[];
+  }
+
+  // Уровень 10 — вычислить геометрию сейфа
+  if(level===10){
+    lvl10Phase=1; lvl10Hits=0; lvl10OpenAnim=0;
+    clearTimeout(lvl10OpenTimer); lvl10OpenTimer=null;
+    const pad=18;
+    const x0=BOFF_X+2*(BW+BPAD);
+    const y0=BOFF_Y;
+    const x1=BOFF_X+5*(BW+BPAD)+BW;
+    const y1=BOFF_Y+4*(BH+BPAD)+BH;
+    lvl10Safe={x:x0-pad, y:y0-pad, w:(x1-x0)+pad*2, h:(y1-y0)+pad*2};
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  PARTICLES
+// ═══════════════════════════════════════════════════════
+function spawnParticles(x,y,color,n=14){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, s=1.5+Math.random()*3.5;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,
+      life:1,decay:0.033+Math.random()*0.04,r:2+Math.random()*3,color});
+  }
+}
+function updateParticles(){
+  for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=0.1;p.life-=p.decay;}
+  particles=particles.filter(p=>p.life>0);
+}
+function drawParticles(){
+  for(const p of particles){
+    ctx.save();ctx.globalAlpha=p.life;ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.restore();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAW BOOK — чистый эмодзи, без рамок
+// ═══════════════════════════════════════════════════════
+function drawBrick(b){
+  if(!b.alive)return;
+  const {x,y,w,h,book,hp,hit,prize}=b;
+  ctx.save();
+  // Уровень 10 фаза 1: призрачный силуэт книги
+  if(level===10 && lvl10Phase===1){
+    const fs=Math.min(w,h)*0.82;
+    ctx.font=`${fs}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.globalAlpha=0.22;
+    ctx.fillText(book.emoji, x+w/2+3, y+h/2+3); // тень
+    ctx.globalAlpha=0.18;
+    ctx.fillText(book.emoji, x+w/2, y+h/2+1);   // основной
+    ctx.globalAlpha=1;
+    ctx.restore();
+    return;
+  }
+  // Уровень 7: прозрачность при телепортации
+  if(level===7){
+    const vis = b.fadeOut > 0 ? b.fadeOut : b.fadeIn;
+    if(vis <= 0.02){ ctx.restore(); return; }
+    ctx.globalAlpha = (b.fadeOut > 0) ? b.fadeOut : b.fadeIn;
+  }
+  // Раскачка (уровень 4)
+  if(b.swingAngle){
+    ctx.translate(x+w/2, y+h);      // поворот вокруг нижнего края
+    ctx.rotate(b.swingAngle);
+    ctx.translate(-(x+w/2), -(y+h));
+  }
+  const ox=hit>0?(Math.random()-0.5)*2:0;
+  const oy=hit>0?(Math.random()-0.5)*2:0;
+  const bx=x+ox, by=y+oy;
+  const damaged=hp<b.maxHp;
+
+  // Книга — эмодзи без shadowBlur (он даёт мерцание/рябь)
+  const fs=Math.min(w,h)*0.82;
+  ctx.font=`${fs}px serif`;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+
+  if(damaged){
+    ctx.globalAlpha=0.45;
+    ctx.filter='grayscale(0.7) brightness(0.6)';
+  }
+  ctx.fillText(book.emoji, bx+w/2, by+h/2+1);
+  ctx.filter='none';
+  ctx.globalAlpha=1;
+
+  // Подпись
+  if(!damaged){
+    ctx.font='bold 6px "IM Fell English",serif';
+    ctx.fillStyle=book.glow+'bb';
+    ctx.fillText(book.label, bx+w/2, by+h-2);
+  }
+
+  // Мерцающий значок приза
+  if(prize&&!b.prizeShown){
+    const p=0.55+0.45*Math.sin(Date.now()*0.008);
+    ctx.globalAlpha=p;
+    ctx.font='9px serif';
+    ctx.textAlign='right';ctx.textBaseline='top';
+    ctx.fillText(prize==='fire'?'🔥':'⚒️', bx+w-1, by+1);
+    ctx.globalAlpha=1;
+  }
+
+  // Уровень 8: голубое электрическое свечение неуязвимых книг
+  if(level===8 && lvl8IsImmune(b)){
+    const pulse=0.5+0.5*Math.sin(Date.now()*0.012);
+    ctx.shadowColor='#44aaff';
+    ctx.shadowBlur=12*pulse;
+    ctx.strokeStyle=`rgba(80,180,255,${0.55+0.45*pulse})`;
+    ctx.lineWidth=2.5;
+    ctx.beginPath();
+    ctx.roundRect(bx+1,by+1,w-2,h-2,3);
+    ctx.stroke();
+    ctx.shadowBlur=0;
+    // Искорки по углам
+    ctx.fillStyle=`rgba(160,220,255,${0.8*pulse})`;
+    [[bx+4,by+4],[bx+w-4,by+4],[bx+4,by+h-4],[bx+w-4,by+h-4]].forEach(([px,py])=>{
+      ctx.beginPath();ctx.arc(px,py,1.8,0,Math.PI*2);ctx.fill();
+    });
+  }
+
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAW LAWYER
+// ═══════════════════════════════════════════════════════
+function drawPaddle(){
+  const ax=padX+PAD_W/2, ay=PAD_Y;
+  ctx.save();
+
+  // Ноги
+  ctx.strokeStyle='#22223a';ctx.lineWidth=4;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(ax-6,ay-4);ctx.lineTo(ax-8,ay+12);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ax+6,ay-4);ctx.lineTo(ax+8,ay+12);ctx.stroke();
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(ax-10,ay+13,5,3,-0.15,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(ax+10,ay+13,5,3,0.15,0,Math.PI*2);ctx.fill();
+
+  // Мантия
+  ctx.fillStyle='#12122a';
+  ctx.beginPath();
+  ctx.moveTo(ax-18,ay-2);ctx.lineTo(ax-13,ay-36);ctx.lineTo(ax+13,ay-36);ctx.lineTo(ax+18,ay-2);
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#2a2a50';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(ax-10,ay-34);ctx.lineTo(ax-14,ay-4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ax+10,ay-34);ctx.lineTo(ax+14,ay-4);ctx.stroke();
+
+  // ── Анимированные руки ──────────────────────────────
+  // sin(t·π) даёт форму дуги: 0 → 1 → 0
+  const lSwing = armAnim.side === -1 ? Math.sin(armAnim.t * Math.PI) : 0;
+  const rSwing = armAnim.side ===  1 ? Math.sin(armAnim.t * Math.PI) : 0;
+
+  // Плечи (точки выхода рукава из мантии)
+  const lSx = ax - 13, lSy = ay - 26;
+  const rSx = ax + 13, rSy = ay - 26;
+
+  // Позиция кистей: в покое — вниз-наружу; при броске — вверх-внутрь
+  const lHx = ax - 22 + lSwing * 28;   // сдвиг внутрь при взмахе
+  const lHy = ay - 16 - lSwing * 42;   // подъём при взмахе
+  const rHx = ax + 22 - rSwing * 28;
+  const rHy = ay - 16 - rSwing * 42;
+
+  // Вспомогательные функции рисования
+  function drawSleeve(sx, sy, hx, hy) {
+    const dx = hx - sx, dy = hy - sy;
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const nx = -dy/len, ny = dx/len; // перпендикуляр
+    const ws = 7.5, wh = 4;          // ширина у плеча / запястья
+    ctx.fillStyle = '#12122a';
+    ctx.beginPath();
+    ctx.moveTo(sx + nx*ws, sy + ny*ws);
+    ctx.bezierCurveTo(
+      sx + nx*ws + dx*0.4, sy + ny*ws + dy*0.4,
+      hx + nx*wh + dx*0.1, hy + ny*wh - dy*0.1,
+      hx + nx*wh, hy + ny*wh
+    );
+    ctx.lineTo(hx - nx*wh, hy - ny*wh);
+    ctx.bezierCurveTo(
+      hx - nx*wh + dx*0.1, hy - ny*wh - dy*0.1,
+      sx - nx*ws + dx*0.4, sy - ny*ws + dy*0.4,
+      sx - nx*ws, sy - ny*ws
+    );
+    ctx.closePath();
+    ctx.fill();
+    // Блик на рукаве
+    ctx.strokeStyle = '#2a2a50';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(sx + nx*4, sy + ny*4);
+    ctx.bezierCurveTo(
+      sx + nx*4 + dx*0.4, sy + ny*4 + dy*0.4,
+      hx + nx*2, hy + ny*2,
+      hx + nx*2, hy + ny*2
+    );
+    ctx.stroke();
+  }
+
+  function drawCuff(hx, hy, sx, sy) {
+    const dx = hx - sx, dy = hy - sy;
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const nx = -dy/len, ny = dx/len;
+    // Белая манжета — эллипс перпендикулярно руке
+    ctx.fillStyle = '#e8e4d8';
+    ctx.beginPath();
+    ctx.ellipse(hx, hy, 5.5, 3.5, Math.atan2(dy, dx), 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#c8c4b0';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  }
+
+  function drawHand(hx, hy, sx, sy) {
+    const dx = hx - sx, dy = hy - sy;
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const ux = dx/len, uy = dy/len;   // направление руки
+    const nx = -uy, ny = ux;           // перпендикуляр
+
+    // Ладонь
+    ctx.fillStyle = '#f5c8a0';
+    ctx.beginPath();
+    ctx.ellipse(hx + ux*5, hy + uy*5, 5, 4, Math.atan2(dy, dx), 0, Math.PI*2);
+    ctx.fill();
+
+    // 3 пальца вдоль оси
+    ctx.strokeStyle = '#e0a878';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    for(let f = -1; f <= 1; f++) {
+      const fx = hx + ux*5 + nx*f*2.5;
+      const fy = hy + uy*5 + ny*f*2.5;
+      ctx.beginPath();
+      ctx.moveTo(fx, fy);
+      ctx.lineTo(fx + ux*5, fy + uy*5);
+      ctx.stroke();
+    }
+    // Большой палец — поперёк
+    ctx.beginPath();
+    ctx.moveTo(hx + ux*3 - nx*5, hy + uy*3 - ny*5);
+    ctx.lineTo(hx + ux*6 - nx*3, hy + uy*6 - ny*3);
+    ctx.stroke();
+  }
+
+  // Рисуем сначала рукава, потом манжеты, потом кисти (порядок слоёв)
+  drawSleeve(lSx, lSy, lHx, lHy);
+  drawSleeve(rSx, rSy, rHx, rHy);
+  drawCuff(lHx, lHy, lSx, lSy);
+  drawCuff(rHx, rHy, rSx, rSy);
+  drawHand(lHx, lHy, lSx, lSy);
+  drawHand(rHx, rHy, rSx, rSy);
+
+  // Жабо
+  ctx.fillStyle='#f0ece0';
+  ctx.beginPath();
+  ctx.moveTo(ax-7,ay-36);ctx.quadraticCurveTo(ax-4,ay-28,ax,ay-25);
+  ctx.quadraticCurveTo(ax+4,ay-28,ax+7,ay-36);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#c8c4b0';ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.moveTo(ax-3,ay-34);ctx.lineTo(ax-1,ay-26);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ax+3,ay-34);ctx.lineTo(ax+1,ay-26);ctx.stroke();
+
+  // Голова
+  ctx.fillStyle='#f5c8a0';
+  ctx.fillRect(ax-4,ay-44,8,8);
+  ctx.beginPath();ctx.ellipse(ax,ay-50,10,12,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e8b090';
+  ctx.beginPath();ctx.ellipse(ax-10,ay-50,3,4,-0.3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(ax+10,ay-50,3,4,0.3,0,Math.PI*2);ctx.fill();
+
+  // Брови
+  ctx.strokeStyle='#5a3a1a';ctx.lineWidth=1.2;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(ax-6,ay-54);ctx.lineTo(ax-2,ay-55);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ax+2,ay-55);ctx.lineTo(ax+6,ay-54);ctx.stroke();
+
+  // Глаза
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.ellipse(ax-4,ay-51,2.8,3.2,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(ax+4,ay-51,2.8,3.2,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#2a1a0a';
+  ctx.beginPath();ctx.arc(ax-3.5,ay-51,1.8,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(ax+4.5,ay-51,1.8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(ax-3,ay-52,0.6,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(ax+5,ay-52,0.6,0,Math.PI*2);ctx.fill();
+
+  // Нос, рот
+  ctx.fillStyle='#e0a878';
+  ctx.beginPath();ctx.ellipse(ax,ay-48,1.5,2,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#8b4513';ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.arc(ax,ay-45,3,0.2,Math.PI-0.2);ctx.stroke();
+
+  // ── Судейский парик — струящийся вниз ──
+  // Парик рисуется ДО шапочки (под ней)
+  // Основа — белая масса по бокам головы, от шапочки вниз
+  const wigColor = '#e8e4d8';
+  const wigStroke = '#c8c0a8';
+
+  // Левая сторона парика — до уровня воротника (ay-37)
+  ctx.fillStyle = wigColor;
+  ctx.beginPath();
+  ctx.moveTo(ax-8, ay-60);
+  ctx.bezierCurveTo(ax-18, ay-56, ax-20, ay-48, ax-18, ay-42);
+  ctx.bezierCurveTo(ax-20, ay-38, ax-16, ay-37, ax-18, ay-37);
+  ctx.lineTo(ax-10, ay-37);
+  ctx.bezierCurveTo(ax-10, ay-37, ax-8, ay-40, ax-10, ay-42);
+  ctx.bezierCurveTo(ax-8,  ay-48, ax-6, ay-55, ax-8,  ay-60);
+  ctx.closePath();
+  ctx.fill();
+
+  // Правая сторона парика
+  ctx.beginPath();
+  ctx.moveTo(ax+8, ay-60);
+  ctx.bezierCurveTo(ax+18, ay-56, ax+20, ay-48, ax+18, ay-42);
+  ctx.bezierCurveTo(ax+20, ay-38, ax+16, ay-37, ax+18, ay-37);
+  ctx.lineTo(ax+10, ay-37);
+  ctx.bezierCurveTo(ax+10, ay-37, ax+8, ay-40, ax+10, ay-42);
+  ctx.bezierCurveTo(ax+8,  ay-48, ax+6, ay-55, ax+8,  ay-60);
+  ctx.closePath();
+  ctx.fill();
+
+  // Кудрявые волны — линии вдоль прядей
+  ctx.strokeStyle = wigStroke; ctx.lineWidth = 1.1; ctx.lineCap = 'round';
+  // Левые пряди
+  for(let i = 0; i < 3; i++){
+    const ox = -18 + i*4;
+    ctx.beginPath();
+    ctx.moveTo(ax+ox,    ay-57);
+    ctx.quadraticCurveTo(ax+ox-3, ay-50, ax+ox,   ay-44);
+    ctx.quadraticCurveTo(ax+ox+2, ay-40, ax+ox,   ay-37);
+    ctx.stroke();
+  }
+  // Правые пряди
+  for(let i = 0; i < 3; i++){
+    const ox = 18 - i*4;
+    ctx.beginPath();
+    ctx.moveTo(ax+ox,    ay-57);
+    ctx.quadraticCurveTo(ax+ox+3, ay-50, ax+ox,   ay-44);
+    ctx.quadraticCurveTo(ax+ox-2, ay-40, ax+ox,   ay-37);
+    ctx.stroke();
+  }
+  // Нижние завитки — чуть выше
+  ctx.strokeStyle = wigStroke; ctx.lineWidth = 1.3;
+  [-16,-12,-8, 8,12,16].forEach((ox)=>{
+    ctx.beginPath();
+    ctx.arc(ax+ox, ay-36, 2, 0, Math.PI*1.8);
+    ctx.stroke();
+  });
+
+  // ── Шапочка: перевёрнутая — широкая вверху, узкая внизу ──
+  // Узкая часть (тулья) — высота 12px (было 7, ×1.5 ≈ 10.5→12)
+  // Широкие поля сверху
+  const hatTopW = 28;  // полуширина полей
+  const hatBotW = 8;   // полуширина тульи внизу
+  const hatTulH = 12;  // высота тульи (узкой части)
+  const hatFieldH = 4; // высота полей (плоские)
+  const hatTop = ay - 75; // верхняя граница
+
+  // Поля (трапеция широкая вверху)
+  ctx.fillStyle = '#12122a';
+  ctx.beginPath();
+  ctx.moveTo(ax - hatTopW, hatTop + hatFieldH);
+  ctx.lineTo(ax + hatTopW, hatTop + hatFieldH);
+  ctx.lineTo(ax + hatTopW, hatTop);
+  ctx.lineTo(ax - hatTopW, hatTop);
+  ctx.closePath();
+  ctx.fill();
+
+  // Тулья — трапеция, сужается вниз
+  ctx.fillStyle = '#1a1a32';
+  ctx.beginPath();
+  ctx.moveTo(ax - hatTopW,   hatTop + hatFieldH);
+  ctx.lineTo(ax + hatTopW,   hatTop + hatFieldH);
+  ctx.lineTo(ax + hatBotW,   hatTop + hatFieldH + hatTulH);
+  ctx.lineTo(ax - hatBotW,   hatTop + hatFieldH + hatTulH);
+  ctx.closePath();
+  ctx.fill();
+
+  // Обводка шапочки
+  ctx.strokeStyle = '#2a2a4a'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(ax - hatTopW, hatTop + hatFieldH);
+  ctx.lineTo(ax + hatTopW, hatTop + hatFieldH);
+  ctx.lineTo(ax + hatBotW, hatTop + hatFieldH + hatTulH);
+  ctx.lineTo(ax - hatBotW, hatTop + hatFieldH + hatTulH);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Блик на полях
+  ctx.fillStyle = 'rgba(255,255,255,0.07)';
+  ctx.fillRect(ax - hatTopW + 2, hatTop, hatTopW*2 - 4, 2);
+
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAW HAMMER
+// ═══════════════════════════════════════════════════════
+function drawHammer(ball){
+  const {x,y,vx,vy,fire}=ball;
+  const angle=Math.atan2(vy,vx)+Math.PI/4;
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.rotate(angle);
+
+  if(fire){
+    // Огненное свечение
+    ctx.shadowColor='#ff6600';
+    ctx.shadowBlur=20;
+    // Аура огня
+    const fireGrad=ctx.createRadialGradient(0,-6,2,0,-6,16);
+    fireGrad.addColorStop(0,'rgba(255,180,0,0.7)');
+    fireGrad.addColorStop(0.5,'rgba(255,60,0,0.3)');
+    fireGrad.addColorStop(1,'rgba(255,0,0,0)');
+    ctx.fillStyle=fireGrad;
+    ctx.beginPath();ctx.arc(0,-6,16,0,Math.PI*2);ctx.fill();
+  } else {
+    ctx.shadowColor='#c9a84c';
+    ctx.shadowBlur=12;
+  }
+
+  // Рукоятка
+  const hGrad=ctx.createLinearGradient(-2,4,2,4);
+  hGrad.addColorStop(0,'#4a2010');hGrad.addColorStop(0.4,'#9b5a2a');
+  hGrad.addColorStop(0.7,'#7a4418');hGrad.addColorStop(1,'#3a1808');
+  ctx.fillStyle=hGrad;
+  ctx.beginPath();
+  ctx.moveTo(-2,4);ctx.lineTo(-2,16);ctx.quadraticCurveTo(-3,18,-2.5,20);
+  ctx.lineTo(2.5,20);ctx.quadraticCurveTo(3,18,2,16);ctx.lineTo(2,4);
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=0.6;
+  ctx.beginPath();ctx.moveTo(-1,5);ctx.lineTo(-1,19);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0.5,5);ctx.lineTo(1,19);ctx.stroke();
+
+  // Втулка
+  const fG=ctx.createLinearGradient(-3,3,3,3);
+  fG.addColorStop(0,'#999');fG.addColorStop(0.5,'#eee');fG.addColorStop(1,'#777');
+  ctx.fillStyle=fG;ctx.fillRect(-3,3,6,4);
+  ctx.strokeStyle='#555';ctx.lineWidth=0.5;ctx.strokeRect(-3,3,6,4);
+
+  // Головка
+  const headG=ctx.createLinearGradient(-10,-14,10,-2);
+  if(fire){
+    headG.addColorStop(0,'#ff6600');headG.addColorStop(0.3,'#ffcc00');
+    headG.addColorStop(0.6,'#ff4400');headG.addColorStop(1,'#cc2200');
+  } else {
+    headG.addColorStop(0,'#3a3020');headG.addColorStop(0.15,'#c9a84c');
+    headG.addColorStop(0.4,'#f0d878');headG.addColorStop(0.65,'#c9a84c');
+    headG.addColorStop(1,'#7a5a18');
+  }
+  ctx.fillStyle=headG;
+  ctx.beginPath();
+  ctx.moveTo(-11,-13);ctx.lineTo(11,-13);ctx.arcTo(13,-13,13,-11,2);
+  ctx.lineTo(13,-3);ctx.arcTo(13,-1,11,-1,2);ctx.lineTo(-11,-1);
+  ctx.arcTo(-13,-1,-13,-3,2);ctx.lineTo(-13,-11);ctx.arcTo(-13,-13,-11,-13,2);
+  ctx.closePath();ctx.fill();
+
+  // Блик
+  ctx.fillStyle=fire?'rgba(255,220,100,0.5)':'rgba(255,240,160,0.55)';
+  ctx.beginPath();ctx.roundRect(-10,-13,20,3,1);ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();ctx.roundRect(-10,-3,20,2,1);ctx.fill();
+
+  // Гравировка
+  ctx.shadowBlur=0;
+  ctx.fillStyle=fire?'rgba(255,200,0,0.9)':'rgba(80,50,10,0.7)';
+  ctx.font='bold 8px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(fire?'🔥':'§',0,-7);
+
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAW DROP (падающий приз)
+// ═══════════════════════════════════════════════════════
+function drawDrop(d){
+  ctx.save();
+  ctx.globalAlpha=0.92;
+  // Пульсирующий фон
+  const pulse=0.85+0.15*Math.sin(Date.now()*0.008);
+  ctx.shadowColor=d.type==='fire'?'#ff6600':'#c9a84c';
+  ctx.shadowBlur=12*pulse;
+
+  const r=13;
+  // Круг-капсула
+  const bg=d.type==='fire'
+    ?ctx.createRadialGradient(d.x,d.y,1,d.x,d.y,r)
+    :ctx.createRadialGradient(d.x,d.y,1,d.x,d.y,r);
+  if(d.type==='fire'){
+    bg.addColorStop(0,'#ff8800');bg.addColorStop(0.6,'#cc3300');bg.addColorStop(1,'#660000');
+  } else {
+    bg.addColorStop(0,'#ffe080');bg.addColorStop(0.6,'#c9a84c');bg.addColorStop(1,'#7a5010');
+  }
+  ctx.fillStyle=bg;
+  ctx.beginPath();ctx.arc(d.x,d.y,r*pulse,0,Math.PI*2);ctx.fill();
+
+  // Иконка
+  ctx.font='14px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.shadowBlur=0;
+  ctx.fillText(d.type==='fire'?'🔥':'⚒️',d.x,d.y+1);
+
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════
+//  BACKGROUND
+// ═══════════════════════════════════════════════════════
+function drawBackground(){
+  // Светлее — чтобы тёмная мантия героя была видна
+  ctx.fillStyle='#2a2214';ctx.fillRect(0,0,W,H);
+  // Горизонтальные линии паркета — чуть заметнее
+  ctx.strokeStyle='#3a3018';ctx.lineWidth=1;
+  for(let ly=0;ly<H;ly+=40){ctx.beginPath();ctx.moveTo(0,ly);ctx.lineTo(W,ly);ctx.stroke();}
+  // Верхняя полоса под книгами
+  ctx.fillStyle='#221c10';ctx.fillRect(0,0,W,BOFF_Y-4);
+  ctx.save();
+  ctx.font='9px "IM Fell English",serif';ctx.fillStyle='#6a5a30';ctx.textAlign='center';
+  ctx.fillText('═══ ЗАЛ СУДЕБНЫХ ЗАСЕДАНИЙ №1 ═══',W/2,18);
+  ctx.restore();
+  // Пол
+  const fg=ctx.createLinearGradient(0,H-20,0,H);
+  fg.addColorStop(0,'#3a2a14');fg.addColorStop(1,'#2a1e0e');
+  ctx.fillStyle=fg;ctx.fillRect(0,H-20,W,20);
+  ctx.strokeStyle='#c9a84c55';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,H-20);ctx.lineTo(W,H-20);ctx.stroke();
+}
+
+// ═══════════════════════════════════════════════════════
+//  COLLISION — FIRE пробивает насквозь
+// ═══════════════════════════════════════════════════════
+function collideBall(b){
+  // Стены
+  if(b.x-b.r<0){b.x=b.r;b.vx=-b.vx;}
+  if(b.x+b.r>W){b.x=W-b.r;b.vx=-b.vx;}
+  if(b.y-b.r<0){b.y=b.r;b.vy=-b.vy;}
+
+  // Дно — шар пропал (проверяем ДО сейфа)
+  if(b.y+b.r>H) return 'lost';
+
+  // Уровень 10 фаза 1: отскок от сейфа, книги недоступны
+  if(level===10 && lvl10Phase===1 && lvl10OpenAnim===0){
+    const s=lvl10Safe;
+    if(b.x+b.r>s.x && b.x-b.r<s.x+s.w && b.y+b.r>s.y && b.y-b.r<s.y+s.h){
+      const oL=(b.x+b.r)-s.x, oR=(s.x+s.w)-(b.x-b.r);
+      const oT=(b.y+b.r)-s.y, oB=(s.y+s.h)-(b.y-b.r);
+      if(Math.min(oL,oR)<Math.min(oT,oB)) b.vx=-b.vx; else b.vy=-b.vy;
+      lvl10Hit();
+    }
+    // НЕ возвращаем — продолжаем чтобы платформа работала
+    // Просто пропускаем проверку книг в фазе 1
+  }
+
+  // Платформа — всегда проверяем (в любой фазе)
+  if(
+    b.vy>0 &&
+    b.y+b.r>=PAD_Y && b.y+b.r<=PAD_Y+18 &&
+    b.x>=padX-26 && b.x<=padX+PAD_W+26
+  ){
+    const rel=(b.x-(padX+PAD_W/2))/(PAD_W/2);
+    const ang=rel*(Math.PI/3);
+    const spd=Math.sqrt(b.vx*b.vx+b.vy*b.vy);
+    b.vx=spd*Math.sin(ang);
+    b.vy=-Math.abs(spd*Math.cos(ang));
+    b.y=PAD_Y-b.r;
+    armAnim.side = b.x < padX + PAD_W / 2 ? -1 : 1;
+    armAnim.t = 0;
+  }
+
+  // Кирпичи — только если не фаза 1 сейфа
+  if(!(level===10 && lvl10Phase===1 && lvl10OpenAnim===0)){
+  if(b.fire){
+    // Огненный — пробивает все кирпичи на пути, не отскакивает
+    for(const brick of bricks){
+      if(!brick.alive || brick.hidden || brick.falling)continue;
+      if(level===7 && brick.fadeOut>0.5) continue;
+      if(level===8 && lvl8IsImmune(brick)) continue; // неуязвимые — огонь тоже не берёт
+      const {x,y,w,h}=brick;
+      if(b.x+b.r>x && b.x-b.r<x+w && b.y+b.r>y && b.y-b.r<y+h){
+        destroyBrick(brick, true);
+      }
+    }
+  } else {
+    // Обычный — первое столкновение и отскок
+    for(const brick of bricks){
+      if(!brick.alive || brick.hidden || brick.falling)continue;
+      if(level===7 && brick.fadeOut>0.5) continue;
+      const {x,y,w,h}=brick;
+      if(b.x+b.r>x && b.x-b.r<x+w && b.y+b.r>y && b.y-b.r<y+h){
+        // Уровень 8: неуязвимая книга — просто отскок без разрушения
+        if(level===8 && lvl8IsImmune(brick)){
+          const oL=(b.x+b.r)-x, oR=(x+w)-(b.x-b.r);
+          const oT=(b.y+b.r)-y, oB=(y+h)-(b.y-b.r);
+          Math.min(oL,oR)<Math.min(oT,oB)?(b.vx=-b.vx):(b.vy=-b.vy);
+          spawnParticles(brick.x+brick.w/2,brick.y+brick.h/2,'#66aaff',6);
+          break;
+        }
+        if(level===9) fog9Reveal(brick.x+brick.w/2, brick.y+brick.h/2, b.fire||false);
+        destroyBrick(brick, false);
+        const oL=(b.x+b.r)-x, oR=(x+w)-(b.x-b.r);
+        const oT=(b.y+b.r)-y, oB=(y+h)-(b.y-b.r);
+        Math.min(oL,oR)<Math.min(oT,oB)?(b.vx=-b.vx):(b.vy=-b.vy);
+        break;
+      }
+    }
+  }
+
+  } // конец if(!фаза1 сейфа)
+
+  return 'ok';
+}
+
+function destroyBrick(brick, instant){
+  brick.hit=3;
+  shakeTimer=4;
+  if(instant){
+    // Огонь уничтожает сразу
+    if(brick.alive){
+      spawnParticles(brick.x+brick.w/2,brick.y+brick.h/2,brick.book.glow,20);
+      brick.alive=false;
+      score+=20*level;
+      updateHUD();
+      tryDropPrize(brick);
+    }
+  } else {
+    brick.hp--;
+    spawnParticles(brick.x+brick.w/2,brick.y+brick.h/2,brick.book.glow);
+    if(brick.hp<=0){
+      brick.alive=false;
+      score+=20*level;
+      updateHUD();
+      tryDropPrize(brick);
+      if(level===7) lvl7OnDestroy();
+      if(level===8) lvl8OnDestroy(brick);
+      if(level===9) fog9Reveal(brick.x+brick.w/2, brick.y+brick.h/2, false);
+      if(level===15) lvl9OnDestroy(brick);
+    }
+  }
+}
+
+function tryDropPrize(brick){
+  if(brick.prize && !brick.prizeShown){
+    brick.prizeShown=true;
+    drops.push({
+      x:brick.x+brick.w/2,
+      y:brick.y+brick.h,
+      vy:2.2,
+      type:brick.prize
+    });
+    showPowerupHint(brick.prize==='fire'
+      ?"🔥 Поймай огненный молоточек!"
+      :"⚒️ Поймай двойной молоточек!");
+  }
+}
+
+// Всплывающая подсказка рисуется прямо на canvas (над книгами)
+let hintText='', hintAlpha=0, hintFadeTimer=null;
+function showPowerupHint(text){
+  hintText=text; hintAlpha=1;
+  clearTimeout(hintFadeTimer);
+  hintFadeTimer=setTimeout(()=>{
+    // плавно гасим за 1 сек
+    let steps=30;
+    const fade=()=>{ hintAlpha=Math.max(0,hintAlpha-1/steps); if(hintAlpha>0) setTimeout(fade,33); };
+    fade();
+  },2500);
+}
+function drawHint(){
+  if(hintAlpha<=0 || !hintText) return;
+  ctx.save();
+  ctx.globalAlpha=hintAlpha;
+  ctx.shadowColor='transparent';
+  ctx.shadowBlur=0;
+  // Фон-капсула
+  const tw=ctx.measureText(hintText).width+24;
+  const hx=W/2, hy=36;
+  ctx.shadowColor='#c9a84c';
+  ctx.shadowBlur=8;
+  ctx.fillStyle='rgba(14,10,4,0.82)';
+  ctx.beginPath();
+  ctx.roundRect(hx-tw/2, hy-11, tw, 22, 8);
+  ctx.fill();
+  ctx.strokeStyle='#c9a84c66';
+  ctx.lineWidth=1;
+  ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#c9a84c';
+  ctx.font='bold 11px "IM Fell English",serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(hintText, hx, hy+1);
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════
+//  DROPS UPDATE — ловля призов платформой
+// ═══════════════════════════════════════════════════════
+function updateDrops(){
+  for(let i=drops.length-1;i>=0;i--){
+    const d=drops[i];
+    d.y+=d.vy;
+
+    // Поймали?
+    if(
+      d.y+13>=PAD_Y && d.y<=PAD_Y+18 &&
+      d.x>=padX-26 && d.x<=padX+PAD_W+26
+    ){
+      applyPrize(d.type);
+      drops.splice(i,1);
+      continue;
+    }
+
+    // Упал за экран
+    if(d.y>H+20) drops.splice(i,1);
+  }
+}
+
+function applyPrize(type){
+  if(type==='twin'){
+    // Добавляем второй шар рядом с первым живым
+    const src=balls.find(b=>!b.stuck)||balls[0];
+    if(src && balls.length<2){
+      balls.push({
+        x:src.x+20, y:src.y,
+        vx:-src.vx*(0.9+Math.random()*0.2),
+        vy:src.vy,
+        r:BALL_R, stuck:false, fire:false
+      });
+      showPowerupHint("⚒️ Двойной молоточек активирован!");
+    }
+  } else if(type==='fire'){
+    // Превращаем все текущие шары в огненные на 8 сек
+    for(const b of balls) b.fire=true;
+    showPowerupHint("🔥 Огненный молоточек — бронебой!");
+    setTimeout(()=>{
+      for(const b of balls) b.fire=false;
+      showPowerupHint("Огонь потух...");
+    },8000);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  LEVEL-SPECIFIC UPDATES
+// ═══════════════════════════════════════════════════════
+
+// Уровень 3 — книги качаются влево-вправо, разные ряды с разной амплитудой
+function updateLevel3(){
+  lvl3Time += 0.018;
+  for(const b of bricks){
+    if(!b.alive) continue;
+    // Амплитуда зависит от ряда: верхние качаются сильнее
+    const rowIdx = Math.round((b.y - BOFF_Y) / (BH+BPAD));
+    const amp = 80 + rowIdx * 15; // верхний ряд = 80px, нижний = ~150
+    // Каждый ряд со своей фазой
+    const phase = rowIdx * 0.7;
+    b.x = b.baseX + Math.sin(lvl3Time + phase) * amp;
+  }
+}
+
+// Уровень 4 — 25% книг дрожат, потом падают; запускается один раз через таймер
+function scheduleLevel4Drop(){
+  if(!gameRunning) return;
+  const alive = bricks.filter(b=>b.alive && !b.falling && b.shakePhase===0);
+  if(alive.length===0) return;
+  // Ровно одна книга за раз
+  const chosen = shuffle([...alive]).slice(0, 1);
+  chosen.forEach(b=>{
+    // 90 кадров дрожания (~1.5 сек), потом падение
+    b.shakePhase = 90 + Math.floor(Math.random()*30);
+    b.swingAngle = 0;       // угол раскачки (радианы)
+    b.swingDir   = 1;       // направление раскачки
+  });
+  lvl4Timer = setTimeout(scheduleLevel4Drop, 3000 + Math.random()*2000);
+}
+
+function updateLevel4(){
+  for(const b of bricks){
+    if(!b.alive) continue;
+    if(b.falling){
+      b.fallVy += 0.4;
+      b.y += b.fallVy;
+
+      // Голова адвоката — центр по X = padX+PAD_W/2, по Y = PAD_Y-50 (макушка ~PAD_Y-76)
+      const headCX = padX + PAD_W/2;
+      const headTop = PAD_Y - 76;  // макушка шапочки
+      const headBot = PAD_Y - 38;  // подбородок
+      const headR   = 14;          // радиус головы
+
+      // Попадание: нижний край книги пересёк макушку И книга горизонтально над головой
+      const bookCX  = b.x + b.w/2;
+      const hitH    = b.y + b.h >= headTop && b.y <= headBot;
+      const hitX    = Math.abs(bookCX - headCX) < (b.w/2 + headR - 4);
+
+      if(hitH && hitX){
+        spawnParticles(headCX, headTop, '#ff4444', 20);
+        endGame(false);
+        return;
+      }
+
+      // Упала за экран — просто убрать
+      if(b.y > H + 10){
+        b.alive = false;
+      }
+    } else if(b.shakePhase > 0){
+      b.shakePhase--;
+      // Раскачка: угол нарастает до max ±18°, потом падение
+      const progress = 1 - b.shakePhase / 120; // 0→1
+      const maxSwing = 0.32 * Math.min(progress * 3, 1); // нарастание
+      b.swingAngle += b.swingDir * 0.18;
+      if(Math.abs(b.swingAngle) > maxSwing) b.swingDir *= -1;
+      b.hit = 1; // лёгкое дрожание
+      if(b.shakePhase === 0){
+        b.falling = true;
+        b.fallVy = 1.5;
+        b.swingAngle = 0;
+      }
+    }
+  }
+}
+
+// Уровень 5 — книги исчезают каждые 20 сек на 3 сек
+function startLevel5Cycle(){
+  if(!gameRunning) return;
+  lvl5HideTimer = setTimeout(()=>{
+    if(!gameRunning) return;
+    const alive = bricks.filter(b=>b.alive && !b.hidden);
+    if(!alive.length){ startLevel5Cycle(); return; }
+
+    // 3 стратегии равновероятно: ряд / квадрат 2x2 / 1-3 одиночных
+    const strategy = Math.floor(Math.random()*3);
+    let toHide = [];
+
+    if(strategy === 0){
+      // Целый случайный ряд
+      const rows = [...new Set(alive.map(b=>Math.round(b.y)))];
+      const rowY = rows[Math.floor(Math.random()*rows.length)];
+      toHide = alive.filter(b=>Math.abs(b.y-rowY)<4);
+
+    } else if(strategy === 1){
+      // Квадрат 2x2
+      const src = shuffle([...alive])[0];
+      if(src){
+        const stepX = BW+BPAD, stepY = BH+BPAD;
+        toHide = alive.filter(b=>
+          Math.abs(b.x-src.x)<stepX*1.2 &&
+          Math.abs(b.y-src.y)<stepY*1.2
+        ).slice(0,4);
+      }
+
+    } else {
+      // 1-3 одиночных случайных книги
+      const count = 1 + Math.floor(Math.random()*3);
+      toHide = shuffle([...alive]).slice(0, count);
+    }
+
+    if(!toHide.length){ startLevel5Cycle(); return; }
+
+    lvl5Hidden = toHide;
+    toHide.forEach(b=>b.hidden=true);
+    showPowerupHint("👻 Книги исчезли...");
+
+    lvl5ShowTimer = setTimeout(()=>{
+      if(!gameRunning) return;
+      lvl5Hidden.forEach(b=>{ if(b.alive) b.hidden=false; });
+      lvl5Hidden=[];
+      showPowerupHint("📚 Книги вернулись!");
+      startLevel5Cycle();
+    }, 3000);
+
+  }, 7000);
+}
+
+function updateLevel5(){}
+
+// ══════════════════════════════════════════════════════
+//  УРОВЕНЬ 9 — лавинное размножение книг
+// ══════════════════════════════════════════════════════
+
+// Создать книгу в ячейке (r,c) — только если свободно
+function lvl9SpawnAt(r, c){
+  if(!gameRunning || level!==15) return;
+  if(r<0||r>=ROWS||c<0||c>=COLS) return;
+  if(grid9[r][c]) return; // уже занято
+  grid9[r][c] = true;
+
+  const bx = BOFF_X + c*(BW+BPAD);
+  const by = BOFF_Y + r*(BH+BPAD);
+  const book = BOOK_TYPES[(r*3+c)%BOOK_TYPES.length];
+  const nb = {
+    x:bx, y:by, baseX:bx, w:BW, h:BH,
+    book, hp:1, maxHp:1, alive:true, hit:0,
+    isFile:false, side:null, prize:null, prizeShown:false,
+    hidden:false, shakePhase:0, swingAngle:0, swingDir:1,
+    falling:false, fallVy:0,
+    fadeOut:0, fadeIn:0,
+    lvl9r:r, lvl9c:c,
+  };
+  bricks.push(nb);
+  // Плавное появление
+  let fi=0;
+  const timer=setInterval(()=>{
+    if(!nb.alive){clearInterval(timer);return;}
+    nb.fadeIn=Math.min(1,fi+=0.12);
+    if(nb.fadeIn>=1) clearInterval(timer);
+  },16);
+}
+
+// Сдвинуть ряд r → r-1 (визуально и в grid)
+function lvl9ShiftRowUp(r){
+  if(r<=0) return;
+  // Сдвиг в grid
+  for(let c=0;c<COLS;c++) grid9[r-1][c]=grid9[r][c];
+  for(let c=0;c<COLS;c++) grid9[r][c]=false;
+  // Сдвиг кирпичей
+  const newY = BOFF_Y+(r-1)*(BH+BPAD);
+  for(const b of bricks){
+    if(!b.alive||b.lvl9r!==r) continue;
+    b.y   = newY;
+    b.lvl9r = r-1;
+  }
+}
+
+function lvl9OnDestroy(brick){
+  const r = brick.lvl9r, c = brick.lvl9c;
+  if(r===undefined||c===undefined) return;
+
+  // Освободить ячейку
+  if(r>=0&&r<ROWS&&c>=0&&c<COLS) grid9[r][c]=false;
+
+  // Гарантированно спавним обоих соседей через небольшую паузу
+  setTimeout(()=>{
+    if(!gameRunning||level!==15) return;
+
+    const spawnLeft  = (c-1>=0   && !grid9[r][c-1]);
+    const spawnRight = (c+1<COLS  && !grid9[r][c+1]);
+
+    if(spawnLeft)  lvl9SpawnAt(r, c-1);
+    if(spawnRight) lvl9SpawnAt(r, c+1);
+
+    // Проверяем заполненность ряда — через паузу после спавна
+    setTimeout(()=>{
+      if(!gameRunning||level!==15) return;
+      if(grid9[r].every(v=>v)){
+        // Ряд полон — двигаем все заполненные ряды выше
+        for(let row=r; row>0; row--){
+          if(grid9[row].every(v=>v)) lvl9ShiftRowUp(row);
+        }
+        // Спавним новую стартовую книгу в нижнем пустом ряду
+        let spawnRow=-1;
+        for(let row=ROWS-1;row>=0;row--){
+          if(grid9[row].every(v=>!v)){spawnRow=row;break;}
+        }
+        if(spawnRow>=0){
+          setTimeout(()=>lvl9SpawnAt(spawnRow,3), 400);
+        }
+      }
+    }, 250);
+  }, 150);
+}
+
+function updateLevel15(){  if(!grid9.length) return;
+  // Победа: все 40 ячеек заняты
+  let total=0;
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(grid9[r][c]) total++;
+  if(total>=ROWS*COLS) endGame(true);
+}
+
+// ══════════════════════════════════════════════════════
+//  УРОВЕНЬ 9 — ТУМАН ВОЙНЫ
+// ══════════════════════════════════════════════════════
+
+// Размер зоны рассеивания (обычная и при огне)
+const FOG9_R_NORMAL = 72;
+const FOG9_R_FIRE   = 144;
+// Время жизни рассеянной зоны (мс)
+const FOG9_LIFE     = 2200;
+// Скорость угасания тумана (0..1 на кадр)
+const FOG9_RETURN   = 0.0028; // ~6 сек при 60fps (было 4 сек)
+
+// Инициализировать туман — плотный над зоной книг
+function initFog9(){
+  lvl9Fog=[];
+  lvl9Reveals=[];
+  // Покрываем зону книг облаком частиц — лёгкий туман
+  for(let i=0;i<120;i++){
+    const c=Math.floor(Math.random()*COLS);
+    const r=Math.floor(Math.random()*ROWS);
+    lvl9Fog.push({
+      x: BOFF_X + c*(BW+BPAD) + Math.random()*BW,
+      y: BOFF_Y + r*(BH+BPAD) + Math.random()*BH,
+      baseAlpha: 0.18 + Math.random()*0.12,
+      alpha: 0,
+      size: 40 + Math.random()*50,
+    });
+  }
+}
+
+// Добавить зону рассеивания при ударе
+function fog9Reveal(x, y, fire){
+  const r = fire ? FOG9_R_FIRE : FOG9_R_NORMAL;
+  // Добавляем несколько reveals с разным радиусом — центр чёткий
+  lvl9Reveals.push({ x, y, r, life:1.0 });
+  lvl9Reveals.push({ x, y, r:r*0.5, life:1.0 });
+}
+
+// Обновить туман каждый кадр
+function updateLevel9(){
+  // Нарастание тумана при старте
+  for(const f of lvl9Fog){
+    if(f.alpha < f.baseAlpha) f.alpha = Math.min(f.baseAlpha, f.alpha+0.012);
+  }
+
+  // Зоны рассеивания угасают
+  for(const rv of lvl9Reveals){
+    rv.life = Math.max(0, rv.life - FOG9_RETURN);
+  }
+  // Удалить полностью угасшие
+  lvl9Reveals = lvl9Reveals.filter(rv=>rv.life>0);
+
+  // Слабое рассеивание вокруг летящего молоточка
+  for(const b of balls){
+    if(!b.stuck){
+      const r = b.fire ? 45 : 22;
+      // Добавляем только каждые 3 кадра чтобы не перегружать массив
+      if(Math.random()<0.33){
+        lvl9Reveals.push({x:b.x, y:b.y, r, life:0.28});
+      }
+    }
+  }
+}
+
+// Нарисовать туман поверх книг
+function drawFog9(){
+  if(!lvl9Fog.length) return;
+
+  // Определяем «видимые» зоны из lvl9Reveals
+  // Для каждой частицы тумана: если попадает в зону reveal — уменьшаем alpha
+
+  ctx.save();
+
+  for(const f of lvl9Fog){
+    // Считаем суммарный «reveal» в этой точке
+    let revealFactor = 0;
+    for(const rv of lvl9Reveals){
+      const dx=f.x-rv.x, dy=f.y-rv.y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist < rv.r){
+        // Резкое рассеивание — почти до нуля в центре
+        const strength = Math.pow(1 - dist/rv.r, 0.5) * rv.life;
+        revealFactor = Math.max(revealFactor, strength);
+      }
+    }
+
+    const drawAlpha = f.alpha * Math.max(0, 1 - revealFactor*1.8);
+    if(drawAlpha <= 0.01) continue;
+
+    ctx.globalAlpha = drawAlpha;
+    // Дым — радиальный градиент серо-синеватый
+    const g = ctx.createRadialGradient(f.x,f.y,0, f.x,f.y, f.size);
+    g.addColorStop(0,   'rgba(180,190,210,0.9)');
+    g.addColorStop(0.5, 'rgba(150,165,190,0.6)');
+    g.addColorStop(1,   'rgba(120,140,170,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.size, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════════════
+//  УРОВЕНЬ 10 — СЕЙФ
+// ══════════════════════════════════════════════════════
+function lvl10Hit(){
+  if(lvl10Phase!==1) return;
+  lvl10Hits++;
+  shakeTimer=5;
+  spawnParticles(lvl10Safe.x+lvl10Safe.w/2, lvl10Safe.y, '#c9a84c', 8);
+  if(lvl10Hits>=LVL10_MAX_HITS) lvl10OpenSafe();
+}
+
+function lvl10OpenSafe(){
+  lvl10Phase=2;
+  showPowerupHint("🔓 Сейф взломан! Выбивай книги!");
+  // Анимация открытия — 1.2 сек
+  const start=Date.now();
+  function animate(){
+    lvl10OpenAnim=Math.min(1,(Date.now()-start)/1200);
+    if(lvl10OpenAnim<1) lvl10OpenTimer=setTimeout(animate,16);
+    else { lvl10OpenAnim=1; lvl10OpenTimer=null; }
+  }
+  animate();
+}
+
+function drawSafeBack(){
+  if(level!==10) return;
+  const s=lvl10Safe;
+  if(!s||!s.w) return;
+  const phase2=lvl10Phase===2;
+  const alpha = phase2 ? Math.max(0,1-lvl10OpenAnim) : 1;
+  if(alpha<=0) return;
+
+  ctx.save();
+  ctx.globalAlpha=alpha;
+
+  // Металлический корпус — тёмно-серый с градиентом
+  const bg=ctx.createLinearGradient(s.x,s.y,s.x+s.w,s.y+s.h);
+  bg.addColorStop(0,'#2e2e2e');
+  bg.addColorStop(0.5,'#484848');
+  bg.addColorStop(1,'#1e1e1e');
+  ctx.fillStyle=bg;
+  ctx.shadowColor='#aaa';
+  ctx.shadowBlur=8;
+  ctx.beginPath(); ctx.roundRect(s.x,s.y,s.w,s.h,12); ctx.fill();
+  ctx.shadowBlur=0;
+
+  // Тёмная внутренняя зона (под книги)
+  ctx.fillStyle='rgba(8,6,3,0.7)';
+  ctx.beginPath(); ctx.roundRect(s.x+10,s.y+10,s.w-20,s.h-20,6); ctx.fill();
+
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+function drawSafeFront(){
+  if(level!==10) return;
+  const s=lvl10Safe;
+  if(!s||!s.w) return;
+  const phase2=lvl10Phase===2;
+  const opening=lvl10OpenAnim>0 && lvl10OpenAnim<1;
+  const alpha = phase2 ? Math.max(0,1-lvl10OpenAnim) : 1;
+
+  ctx.save();
+  ctx.globalAlpha=alpha;
+
+  // Электрическое свечение рамки (как уровень 8)
+  const pulse=0.5+0.5*Math.sin(Date.now()*0.008);
+  ctx.shadowColor=`rgba(100,180,255,${0.5+0.4*pulse})`;
+  ctx.shadowBlur=18*pulse;
+  ctx.strokeStyle=`rgba(120,200,255,${0.7+0.3*pulse})`;
+  ctx.lineWidth=3.5;
+  ctx.beginPath(); ctx.roundRect(s.x,s.y,s.w,s.h,12); ctx.stroke();
+  ctx.shadowBlur=0;
+
+  // Внутренняя рамка
+  ctx.strokeStyle='rgba(180,220,255,0.3)';
+  ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.roundRect(s.x+6,s.y+6,s.w-12,s.h-12,8); ctx.stroke();
+
+  // Заклёпки по углам
+  ctx.fillStyle='#aaa';
+  [[s.x+10,s.y+10],[s.x+s.w-10,s.y+10],
+   [s.x+10,s.y+s.h-10],[s.x+s.w-10,s.y+s.h-10]].forEach(([rx,ry])=>{
+    ctx.beginPath(); ctx.arc(rx,ry,5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#666'; ctx.lineWidth=1; ctx.stroke();
+  });
+
+  // Дверка
+  const doorW=s.w*0.72, doorH=s.h*0.8;
+  const doorX=s.x+(s.w-doorW)/2, doorY=s.y+(s.h-doorH)/2;
+  if(opening){
+    ctx.save();
+    ctx.translate(doorX+doorW/2, doorY+doorH/2);
+    ctx.scale(1-lvl10OpenAnim, 1);
+    ctx.translate(-doorW/2,-doorH/2);
+    drawDoorPanel(0,0,doorW,doorH);
+    ctx.restore();
+  } else if(!phase2){
+    ctx.save(); ctx.translate(doorX,doorY);
+    drawDoorPanel(0,0,doorW,doorH);
+    ctx.restore();
+  }
+
+  ctx.globalAlpha=1;
+
+  // ── Счётчик печатей (фаза 1) ──────────────────
+  if(lvl10Phase===1){
+    const remaining=LVL10_MAX_HITS-lvl10Hits;
+    const sealSize=14, sealGap=4;
+    const totalW=LVL10_MAX_HITS*(sealSize+sealGap)-sealGap;
+    const sealStartX=s.x+(s.w-totalW)/2;
+    const sealY=s.y-24;
+    for(let i=0;i<LVL10_MAX_HITS;i++){
+      const active=i<remaining;
+      ctx.fillStyle=active?'#c9a84c':'#3a3a3a';
+      ctx.globalAlpha=active?0.9:0.4;
+      ctx.shadowColor=active?'#c9a84c':'transparent';
+      ctx.shadowBlur=active?6:0;
+      ctx.beginPath();
+      ctx.arc(sealStartX+i*(sealSize+sealGap)+sealSize/2, sealY, sealSize/2, 0, Math.PI*2);
+      ctx.fill();
+      // Печать — маленькое «§» внутри
+      if(active){
+        ctx.shadowBlur=0;
+        ctx.fillStyle='#7a4a10';
+        ctx.font='bold 7px serif';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('§', sealStartX+i*(sealSize+sealGap)+sealSize/2, sealY);
+      }
+    }
+    ctx.globalAlpha=1; ctx.shadowBlur=0;
+  }
+
+  ctx.restore();
+}
+
+function drawDoorPanel(x,y,w,h){
+  // Дверная панель
+  const dGrad=ctx.createLinearGradient(x,y,x+w,y+h);
+  dGrad.addColorStop(0,'#5a5a5a');
+  dGrad.addColorStop(0.5,'#7a7a7a');
+  dGrad.addColorStop(1,'#4a4a4a');
+  ctx.fillStyle=dGrad;
+  ctx.beginPath(); ctx.roundRect(x,y,w,h,6); ctx.fill();
+  ctx.strokeStyle='#999'; ctx.lineWidth=2; ctx.stroke();
+
+  // Круглая ручка по центру
+  const hx=x+w*0.75, hy=y+h/2, hr=w*0.1;
+  // Внешнее кольцо
+  const hGrad=ctx.createRadialGradient(hx-hr*0.3,hy-hr*0.3,hr*0.1,hx,hy,hr);
+  hGrad.addColorStop(0,'#ddd');
+  hGrad.addColorStop(0.5,'#999');
+  hGrad.addColorStop(1,'#555');
+  ctx.fillStyle=hGrad;
+  ctx.beginPath(); ctx.arc(hx,hy,hr,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#444'; ctx.lineWidth=1.5; ctx.stroke();
+  // Спицы
+  ctx.strokeStyle='#666'; ctx.lineWidth=1;
+  for(let i=0;i<4;i++){
+    const a=i*Math.PI/4;
+    ctx.beginPath();
+    ctx.moveTo(hx+Math.cos(a)*hr*0.3, hy+Math.sin(a)*hr*0.3);
+    ctx.lineTo(hx+Math.cos(a)*hr*0.85, hy+Math.sin(a)*hr*0.85);
+    ctx.stroke();
+  }
+  // Внутренний круг
+  ctx.fillStyle='#888';
+  ctx.beginPath(); ctx.arc(hx,hy,hr*0.25,0,Math.PI*2); ctx.fill();
+
+  // Декоративные линии на двери
+  ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.roundRect(x+8,y+8,w*0.5-16,h-16,4); ctx.stroke();
+}
+
+function updateLevel10(){}
+
+// ══════════════════════════════════════════════════════
+//  УРОВЕНЬ 8 — зеркальные группы, иммунитет стороны
+// ══════════════════════════════════════════════════════
+function lvl8IsImmune(brick){
+  return brick.side !== null && brick.side === lvl8ImmuneSide;
+}
+
+function lvl8OnDestroy(brick){
+  // Противоположная сторона получает иммунитет 1.5 сек
+  const oppSide = brick.side === 'left' ? 'right' : 'left';
+  lvl8ImmuneSide = oppSide;
+  clearTimeout(lvl8ImmuneTimer);
+  lvl8ImmuneTimer = setTimeout(()=>{ lvl8ImmuneSide=null; }, 3000);
+}
+
+function updateLevel8(){}
+
+// ══════════════════════════════════════════════════════
+//  УРОВЕНЬ 7 — шахматный порядок + телепортация
+// ══════════════════════════════════════════════════════
+function startLevel7(){
+  lvl7DestroyedCount = 0;
+  lvl7Teleporting = false;
+  lvl7Blobs = [];
+  // Все книги сразу полностью видны
+  bricks.forEach(b=>{ b.fadeIn=1; b.fadeOut=0; });
+  showPowerupHint("♟ Шахматный порядок!");
+}
+
+// Вызывается из destroyBrick когда живая книга разрушена на уровне 7
+function lvl7OnDestroy(){
+  lvl7DestroyedCount++;
+  if(lvl7DestroyedCount >= 2 && !lvl7Teleporting){
+    // Первые 2 уничтожены — запускаем цикл телепортации
+    scheduleLvl7Teleport();
+  }
+}
+
+function scheduleLvl7Teleport(){
+  if(!gameRunning) return;
+  lvl7Timer = setTimeout(()=>{
+    if(!gameRunning) return;
+    triggerLvl7Teleport();
+    lvl7Timer = setTimeout(function loop(){
+      if(!gameRunning) return;
+      triggerLvl7Teleport();
+      lvl7Timer = setTimeout(loop, 3800 + Math.random()*2200);
+    }, 3800 + Math.random()*2200);
+  }, 1800);
+}
+
+function triggerLvl7Teleport(){
+  const alive = bricks.filter(b=>b.alive && !b.falling);
+  if(!alive.length) return;
+
+  // Начинаем fade-out
+  lvl7Teleporting = true;
+  alive.forEach(b=>{ b.fadeOut=1; }); // сразу начинаем гасить
+
+  // Через 25 кадров (~0.4 сек) переставляем и делаем fade-in
+  setTimeout(()=>{
+    if(!gameRunning) return;
+
+    const stillAlive = bricks.filter(b=>b.alive && !b.falling);
+    if(!stillAlive.length){ lvl7Teleporting=false; return; }
+
+    // Берём все 40 ячеек сетки, перемешиваем
+    const freeSlots = shuffle([...lvl7AllCells]);
+    if(!freeSlots.length){ lvl7Teleporting=false; return; }
+
+    // Раздаём книгам новые позиции
+    stillAlive.forEach((b,i)=>{
+      const slot = freeSlots[i % freeSlots.length];
+      b.x     = slot.x;
+      b.y     = slot.y;
+      b.baseX = slot.baseX;
+      b.fadeOut = 0;
+      b.fadeIn  = 0; // запускаем появление
+
+
+    });
+
+    lvl7Teleporting = false;
+  }, 600);
+}
+
+function updateLevel7(){
+  // Плавное fade-out / fade-in книг
+  for(const b of bricks){
+    if(!b.alive) continue;
+    if(b.fadeOut > 0){
+      b.fadeOut = Math.max(0, b.fadeOut - 0.07);
+    }
+    if(b.fadeIn < 1 && b.fadeOut === 0){
+      b.fadeIn = Math.min(1, b.fadeIn + 0.08);
+    }
+  }
+
+}
+
+// drawLvl7Blobs удалена (не используется)
+
+// Уровень 6 — книги спускаются вниз каждые 6 сек на полстрока
+function startLevel6Cycle(){
+  if(!gameRunning) return;
+  lvl6Timer = setTimeout(()=>{
+    if(!gameRunning) return;
+    lvl6DropOffset += (BH + BPAD) / 2; // полстроки вниз
+    // Двигаем все живые кирпичи
+    for(const b of bricks){
+      b.y += (BH + BPAD) / 2;
+      b.baseX = b.x; // обновляем baseX для lvl3-совместимости
+    }
+    // Проигрыш если любая книга достигла зоны игрока
+    const dangerY = PAD_Y - 90; // выше головы
+    if(bricks.some(b=>b.alive && b.y + b.h >= dangerY)){
+      endGame(false);
+      return;
+    }
+    showPowerupHint("⚠️ Книги опускаются!");
+    startLevel6Cycle();
+  }, 6000);
+}
+
+function updateLevel6(){
+  // Проверка в реальном времени — если книга доползла до игрока
+  const dangerY = PAD_Y - 90;
+  if(bricks.some(b=>b.alive && b.y + b.h >= dangerY)){
+    endGame(false);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  UPDATE
+// ═══════════════════════════════════════════════════════
+function update(){
+  // Платформа
+  if(mouseTarget!==null){
+    padX+=(mouseTarget-PAD_W/2-padX)*MOUSE_LERP;
+  } else {
+    if(keys['ArrowLeft']||keys['a'])  padSpeed=Math.max(padSpeed-PAD_ACCEL,-PAD_MAX);
+    if(keys['ArrowRight']||keys['d']) padSpeed=Math.min(padSpeed+PAD_ACCEL, PAD_MAX);
+    if(!keys['ArrowLeft']&&!keys['a']&&!keys['ArrowRight']&&!keys['d']) padSpeed*=PAD_FRIC;
+    padX+=padSpeed;
+  }
+  padX=Math.max(0,Math.min(W-PAD_W,padX));
+
+  // Шары
+  for(let i=balls.length-1;i>=0;i--){
+    const b=balls[i];
+    if(b.stuck){
+      b.x=padX+PAD_W/2;
+      continue;
+    }
+    const spd=Math.sqrt(b.vx**2+b.vy**2);
+    const tgt=BALL_BASE; // скорость одинакова на всех уровнях
+    if(spd>0.01&&spd<tgt){b.vx*=tgt/spd;b.vy*=tgt/spd;}
+    b.x+=b.vx; b.y+=b.vy;
+    const res=collideBall(b);
+    if(res==='lost'){
+      balls.splice(i,1);
+    }
+  }
+
+  // Если все шары потеряны
+  if(balls.length===0){
+    lives--; updateHUD();
+    if(lives<=0) endGame(false);
+    else resetBall();
+  }
+
+  // Призы
+  updateDrops();
+
+  // Кирпичи — таймер удара
+  for(const b of bricks) if(b.hit>0) b.hit--;
+  updateParticles();
+  if(shakeTimer>0) shakeTimer--;
+  // Продвигаем таймер анимации рук (~18 кадров на полный взмах)
+  if(armAnim.t < 1) armAnim.t = Math.min(1, armAnim.t + 0.055);
+
+  // Механики конкретных уровней
+  if(level===3) updateLevel3();
+  if(level===4) updateLevel4();
+  if(level===5) updateLevel5();
+  if(level===6) updateLevel6();
+  if(level===7) updateLevel7();
+  if(level===8) updateLevel8();
+  if(level===9) updateLevel9();
+  if(level===10) updateLevel10();
+  if(level===15) updateLevel15();
+
+  // Победа
+  // Стандартная победа
+  if(level!==15 && bricks.every(b=>!b.alive)){
+    // Уровень 10 фаза 1: сейф ещё не взломан — книги не считаем
+    if(level===10 && lvl10Phase===1) return;
+    // Уровень 10 фаза 2: книги выбиты — финал уровня
+    if(level===10 && lvl10Phase===2){ endGame(true); return; }
+    if(level<15){
+      // Убираем все шары перед переходом
+      balls=[];
+      level++;
+      resetLevel();
+      initBricks();
+      resetBall();   // всегда начинаем с одним stuck шаром
+      updateHUD();
+      startLevelSpecific();
+    }
+    else endGame(true);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAW
+// ═══════════════════════════════════════════════════════
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  if(shakeTimer>0) ctx.translate((Math.random()-0.5)*3,(Math.random()-0.5)*2);
+
+  drawBackground();
+  drawHint();
+  if(level===10) drawSafeBack();
+  for(const b of bricks) if(!b.hidden) drawBrick(b);
+  if(level===10) drawSafeFront();
+  if(level===9)  drawFog9();
+  drawParticles();
+  for(const d of drops) drawDrop(d);
+  drawPaddle();
+  for(const b of balls) drawHammer(b);
+
+  if(balls.every(b=>b.stuck)){
+    ctx.font='11px "IM Fell English",serif';
+    ctx.fillStyle='#c9a84c88';ctx.textAlign='center';
+    ctx.fillText('[ ПРОБЕЛ / КЛИК — ЗАПУСТИТЬ МОЛОТОЧЕК ]',W/2,H-12);
+  }
+
+  if(paused){
+    ctx.fillStyle='rgba(10,8,4,0.75)';ctx.fillRect(0,0,W,H);
+    ctx.font='bold 2rem "Playfair Display",serif';
+    ctx.fillStyle='#c9a84c';ctx.textAlign='center';
+    ctx.fillText('⏸ ПАУЗА',W/2,H/2-16);
+    ctx.font='0.85rem "IM Fell English",serif';
+    ctx.fillStyle='#7a6a4a';
+    ctx.fillText('Нажмите P для продолжения',W/2,H/2+18);
+  }
+
+  syncSlider();
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════
+//  LOOP
+// ═══════════════════════════════════════════════════════
+function loop(){
+  if(!gameRunning||paused)return;
+  update();draw();
+  animId=requestAnimationFrame(loop);
+}
+
+function updateHUD(){
+  document.getElementById('scoreVal').textContent=score;
+  document.getElementById('livesVal').textContent='❤️'.repeat(Math.max(0,lives));
+  document.getElementById('levelVal').textContent=level;
+}
+
+function resetBall(){
+  balls=[{
+    x:padX+PAD_W/2, y:PAD_Y-20,
+    vx:(Math.random()>0.5?1:-1)*3.2,
+    vy:-3.8,
+    r:BALL_R, stuck:true, fire:false
+  }];
+  drops=[];
+}
+
+function resetLevel(){
+  drops=[];
+  lvl3Time=0;
+  clearTimeout(lvl4Timer); lvl4Timer=null;
+  clearTimeout(lvl5HideTimer); clearTimeout(lvl5ShowTimer);
+  lvl5HideTimer=null; lvl5ShowTimer=null; lvl5Hidden=[];
+  clearTimeout(lvl6Timer); lvl6Timer=null; lvl6DropOffset=0;
+  clearTimeout(lvl7Timer); lvl7Timer=null;
+  lvl7DestroyedCount=0; lvl7Teleporting=false; lvl7Blobs=[]; lvl7AllCells=[];
+  clearTimeout(lvl8ImmuneTimer); lvl8ImmuneTimer=null; lvl8ImmuneSide=null;
+  grid9=[]; lvl9SpawnQueue=[]; lvl9Fog=[]; lvl9Reveals=[];
+  clearTimeout(lvl10OpenTimer); lvl10OpenTimer=null;
+  lvl10Phase=1; lvl10Hits=0; lvl10OpenAnim=0;
+}
+
+function startLevelSpecific(){
+  if(level===4) lvl4Timer = setTimeout(scheduleLevel4Drop, 2500);
+  if(level===5) startLevel5Cycle();
+  if(level===6) startLevel6Cycle();
+  if(level===7) startLevel7();
+  if(level===8) showPowerupHint("⚡ Разбил слева — справа неуязвимы!");
+  if(level===9){ initFog9(); showPowerupHint("🌫 Туман войны — бей чтобы видеть!"); }
+  if(level===10){
+    showPowerupHint("🔒 Взломай сейф — 15 ударов!");
+    // Убедиться что шар не внутри сейфа (он уже рассчитан в initBricks)
+    // resetBall уже вызван выше, PAD_Y-20 всегда ниже сейфа — OK
+  }
+  if(level===15) showPowerupHint("💥 Разбивай — книги множатся! (Уровень 15)");
+}
+
+function startGame(startLevel){
+  score=0;lives=3;level=startLevel||1;paused=false;particles=[];drops=[];
+  padX=W/2-PAD_W/2;padSpeed=0;mouseTarget=null;
+  resetLevel();
+  initBricks();resetBall();updateHUD();
+  startLevelSpecific();
+  document.getElementById('message').style.display='none';
+  hintText=''; hintAlpha=0;
+  gameRunning=true;
+  if(animId)cancelAnimationFrame(animId);
+  loop();
+}
+
+// ══════════════════════════════════════════
+//  ФИНАЛЬНАЯ АНИМАЦИЯ ПОБЕДЫ
+// ══════════════════════════════════════════
+let winAnim = null;
+
+// ═══════════════════════════════════════════════════════
+//  ФИНАЛЬНАЯ АНИМАЦИЯ
+//  Фазы (кадры @ 60fps):
+//  0-40   : фон + лучи появляются
+//  0-90   : стол+стул спускаются сверху
+//  60-140 : герой прыгает и машет внизу
+//  140-200: герой идёт за стол и садится
+//  200-260: герой бьёт молотком, искры, текст
+//  260-310: пауза, показываем кнопку
+// ═══════════════════════════════════════════════════════
+function startWinAnimation(finalScore){
+  winAnim = { frame:0, score:finalScore, done:false, fw:[] };
+  function winLoop(){
+    if(!winAnim||winAnim.done) return;
+    winAnim.frame++;
+    drawWinScene();
+    if(winAnim.frame < 310){
+      requestAnimationFrame(winLoop);
+    } else {
+      winAnim.done=true;
+      const msg=document.getElementById('message');
+      msg.style.display='block';
+      msg.innerHTML=
+        `<button id="startBtn" onclick="startGame()">НОВОЕ ДЕЛО</button>`
+        +`<p style="color:#5a4a20;font-size:0.85rem;margin-top:14px;letter-spacing:0.12em">Все дела закрыты и сданы в архив!</p>`
+        +`<h2 style="margin-top:8px">🏆 ДЕЛО ВЫИГРАНО!</h2>`;
+    }
+  }
+  requestAnimationFrame(winLoop);
+}
+
+// Плавная функция ease-out cubic
+function easeOut(t){ return 1-Math.pow(1-Math.min(1,t),3); }
+function easeInOut(t){ t=Math.min(1,t); return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2; }
+
+function drawWinScene(){
+  const f = winAnim.frame;
+  ctx.clearRect(0,0,W,H);
+
+  // ── Фон зала суда ──────────────────────────────────
+  ctx.fillStyle='#1e1a0e'; ctx.fillRect(0,0,W,H);
+  // Деревянные панели на стенах
+  for(let i=0;i<6;i++){
+    ctx.fillStyle=i%2===0?'#2a2010':'#241c0c';
+    ctx.fillRect(i*(W/6),0,W/6,H);
+  }
+  // Горизонтальные полосы паркета внизу
+  ctx.fillStyle='#2e2210'; ctx.fillRect(0,H*0.7,W,H*0.3);
+  for(let i=0;i<8;i++){
+    ctx.strokeStyle='#3a2c14'; ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,H*0.7+i*14);ctx.lineTo(W,H*0.7+i*14);ctx.stroke();
+  }
+  // Золотые лучи (слабые, только первые 60 кадров нарастают)
+  const rayAlpha = Math.min(0.06, (f/60)*0.06);
+  ctx.save(); ctx.translate(W/2,H*0.45);
+  for(let i=0;i<16;i++){
+    const a=(i/16)*Math.PI*2+f*0.006;
+    ctx.fillStyle=`rgba(201,168,76,${rayAlpha})`;
+    ctx.beginPath();ctx.moveTo(0,0);
+    ctx.lineTo(Math.cos(a)*W,Math.sin(a)*W);
+    ctx.lineTo(Math.cos(a+0.2)*W,Math.sin(a+0.2)*W);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+
+  // ── Фейерверки ─────────────────────────────────────
+  updateFireworks(f);
+  drawFireworks();
+
+  // ── Стол и стул спускаются ─────────────────────────
+  // f=0..90: easeOut спуск
+  const benchProg = easeOut(f/90);
+  const BENCH_FINAL_Y = H*0.34;
+  const benchY = -300 + benchProg*(BENCH_FINAL_Y+300);
+
+  const TDEPTH=70;
+  // Герой сидит в два раза выше — поднимаем на 60px относительно столешницы
+  const HERO_DESK_Y = benchY + 4; // низ тела на уровне жёлтой полосы над зелёным сукном
+
+  const HERO_FLOOR = H*0.82;
+
+  drawBenchAndChair(W/2, benchY);
+
+  let heroX, heroY, waveAngle, hammerT, sitting;
+
+  if(f < 60){
+    heroX = W/2; heroY = H+80; waveAngle=0; hammerT=0; sitting=false;
+  } else if(f < 150){
+    heroX = W/2;
+    const jumpPhase = (f-60)/90;
+    const jumpY = Math.abs(Math.sin(jumpPhase*Math.PI*3))*(-50);
+    heroY = HERO_FLOOR + jumpY;
+    waveAngle = Math.sin((f-60)*0.28)*1.1;
+    hammerT=0; sitting=false;
+  } else if(f < 210){
+    const walkProg = easeInOut((f-150)/60);
+    heroX = W/2;
+    heroY = HERO_FLOOR + walkProg*(HERO_DESK_Y - HERO_FLOOR);
+    waveAngle=0; hammerT=0; sitting=(walkProg>0.85);
+  } else {
+    heroX = W/2;
+    heroY = HERO_DESK_Y;
+    waveAngle=0;
+    const hamProg = (f-210)/50;
+    hammerT = Math.min(1, hamProg);
+    sitting=true;
+  }
+
+  // Герой поверх фасада, под столешницей
+  drawWinHero(heroX, heroY, waveAngle, hammerT, sitting, benchY);
+
+  // Столешница поверх героя
+  drawTableTop(W/2, benchY);
+
+  // ── Текст только внизу ─────────────────────────────
+  if(f > 220){
+    const tAlpha = Math.min(1,(f-220)/30);
+    ctx.save(); ctx.globalAlpha=tAlpha;
+    ctx.textAlign='center'; ctx.shadowBlur=0;
+
+    // Только счёт внизу (надпись убрана с canvas)
+    const sc = winAnim.score;
+    if(typeof sc==='number' && !isNaN(sc)){
+      ctx.font='bold 20px "Playfair Display",serif';
+      ctx.fillStyle='#1a1208';
+      ctx.fillText(`Счёт: ${sc}`, W/2, H-28);
+    }
+    ctx.restore();
+  }
+}
+
+// ── Фейерверки ────────────────────────────────────────
+const FW_COLORS = [
+  '#ff4444','#ff8844','#ffdd22','#44ff88',
+  '#44aaff','#aa44ff','#ff44aa','#ffffff',
+  '#c9a84c','#88ffee',
+];
+
+function spawnFirework(x, y){
+  if(!winAnim) return;
+  const particles = [];
+  const count = 22 + Math.floor(Math.random()*14);
+  const color = FW_COLORS[Math.floor(Math.random()*FW_COLORS.length)];
+  const color2 = FW_COLORS[Math.floor(Math.random()*FW_COLORS.length)];
+  for(let i=0;i<count;i++){
+    const angle = (i/count)*Math.PI*2 + Math.random()*0.3;
+    const speed = 1.8 + Math.random()*3.5;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed - 1.5,
+      life: 1,
+      decay: 0.022 + Math.random()*0.018,
+      r: 1.5 + Math.random()*2,
+      color: Math.random()<0.5 ? color : color2,
+      tail: [],
+    });
+  }
+  // Фонтанчик — несколько снопов вверх
+  const fountCount = 8;
+  for(let i=0;i<fountCount;i++){
+    const angle = -Math.PI/2 + (Math.random()-0.5)*0.8;
+    const speed = 2.5 + Math.random()*3;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed,
+      life: 1,
+      decay: 0.018 + Math.random()*0.015,
+      r: 1.2 + Math.random()*1.5,
+      color: '#fff8e0',
+      fountain: true,
+    });
+  }
+  winAnim.fw.push({ particles, done:false });
+}
+
+function updateFireworks(f){
+  if(!winAnim) return;
+
+  // Запускаем залпы: начиная с f=30, периодически
+  // Левая сторона: x ≈ W*0.12..0.28, правая: x ≈ W*0.72..0.88
+  // y ≈ H*0.05..0.22 (верхняя часть экрана)
+  const launchFrames = [30,48,65,80,100,120,145,165,190,215,240,270];
+  if(launchFrames.includes(f)){
+    const side = f % 2 === 0 ? 'left' : 'right';
+    const x = side==='left'
+      ? W*0.08 + Math.random()*W*0.22
+      : W*0.70 + Math.random()*W*0.22;
+    const y = H*0.04 + Math.random()*H*0.18;
+    spawnFirework(x, y);
+    // Иногда двойной залп
+    if(Math.random()<0.35){
+      const x2 = side==='left'
+        ? W*0.08 + Math.random()*W*0.22
+        : W*0.70 + Math.random()*W*0.22;
+      const y2 = H*0.04 + Math.random()*H*0.18;
+      spawnFirework(x2, y2);
+    }
+  }
+
+  // Обновляем частицы
+  for(const fw of winAnim.fw){
+    let allDead = true;
+    for(const p of fw.particles){
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.fountain ? 0.12 : 0.06; // гравитация
+      p.vx *= 0.97;
+      p.life -= p.decay;
+      if(p.life > 0) allDead = false;
+    }
+    fw.done = allDead;
+  }
+  // Убираем завершённые
+  winAnim.fw = winAnim.fw.filter(fw=>!fw.done);
+}
+
+function drawFireworks(){
+  if(!winAnim || !winAnim.fw.length) return;
+  ctx.save();
+  for(const fw of winAnim.fw){
+    for(const p of fw.particles){
+      if(p.life <= 0) continue;
+      ctx.globalAlpha = Math.pow(p.life, 0.7);
+      // Блик
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 4;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+// ── Рисует стул (сначала, он сзади) и стол (фасад)
+function drawBenchAndChair(cx, topY){
+  ctx.save();
+
+  // Размеры стола
+  const tW=300, tDepth=70, tH=120;
+  const sk=28; // перспективный скос
+
+  // === СТУЛ — позади стола ===
+  const chX=cx, chY=topY-8;
+  const chW=80, chH=130, chSeatH=14;
+
+  // Ножки стула (4 штуки)
+  ctx.fillStyle='#7a5020';
+  [[chX-28,chY+chH],[chX+28,chY+chH],[chX-22,chY+chH+5],[chX+22,chY+chH+5]].forEach(([lx,ly])=>{
+    ctx.fillRect(lx-4, ly-chH+chSeatH, 8, chH-chSeatH);
+  });
+
+  // Сиденье
+  const sGrad=ctx.createLinearGradient(chX-chW/2,chY+chSeatH,chX+chW/2,chY+chSeatH+chSeatH);
+  sGrad.addColorStop(0,'#c8a060'); sGrad.addColorStop(1,'#8a6030');
+  ctx.fillStyle=sGrad;
+  ctx.beginPath(); ctx.roundRect(chX-chW/2, chY, chW, chSeatH, 3); ctx.fill();
+  ctx.strokeStyle='#6a4010'; ctx.lineWidth=1; ctx.stroke();
+
+  // Спинка — высокая, с фигурным верхом
+  const spW=70, spH=110;
+  const spGrad=ctx.createLinearGradient(chX-spW/2,chY-spH,chX+spW/2,chY);
+  spGrad.addColorStop(0,'#e8c880'); spGrad.addColorStop(0.3,'#c8a060'); spGrad.addColorStop(1,'#8a6030');
+  ctx.fillStyle=spGrad;
+  // Форма спинки — трапеция с арочным верхом
+  ctx.beginPath();
+  ctx.moveTo(chX-spW/2, chY);
+  ctx.lineTo(chX+spW/2, chY);
+  ctx.lineTo(chX+spW/2-5, chY-spH+20);
+  ctx.quadraticCurveTo(chX+spW/2-5, chY-spH, chX, chY-spH-10); // арка
+  ctx.quadraticCurveTo(chX-spW/2+5, chY-spH, chX-spW/2+5, chY-spH+20);
+  ctx.closePath();
+  ctx.fill(); ctx.strokeStyle='#6a4010'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // Узор на спинке
+  ctx.strokeStyle='rgba(255,220,120,0.5)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.roundRect(chX-24, chY-spH+15, 48, spH-25, 4); ctx.stroke();
+  ctx.fillStyle='#c9a84c';
+  ctx.beginPath(); ctx.arc(chX, chY-spH+8, 5, 0, Math.PI*2); ctx.fill();
+  // Вертикальная планка посередине
+  ctx.strokeStyle='rgba(255,220,120,0.4)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(chX, chY-10); ctx.lineTo(chX, chY-spH+22); ctx.stroke();
+
+  // === СТОЛ — фасад (боковая и передняя грани) ===
+  // Левая боковая грань
+  const leftGrad=ctx.createLinearGradient(cx-tW/2-sk, topY, cx-tW/2, topY+tDepth);
+  leftGrad.addColorStop(0,'#8a6030'); leftGrad.addColorStop(1,'#6a4820');
+  ctx.fillStyle=leftGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx-tW/2,    topY);
+  ctx.lineTo(cx-tW/2-sk, topY+tDepth);
+  ctx.lineTo(cx-tW/2-sk, topY+tDepth+tH);
+  ctx.lineTo(cx-tW/2,    topY+tH);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#6a4010'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // Правая боковая грань (симметрично)
+  const rightGrad=ctx.createLinearGradient(cx+tW/2+sk, topY, cx+tW/2, topY+tDepth);
+  rightGrad.addColorStop(0,'#8a6030'); rightGrad.addColorStop(1,'#6a4820');
+  ctx.fillStyle=rightGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx+tW/2,    topY);
+  ctx.lineTo(cx+tW/2+sk, topY+tDepth);
+  ctx.lineTo(cx+tW/2+sk, topY+tDepth+tH);
+  ctx.lineTo(cx+tW/2,    topY+tH);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#6a4010'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // Передняя грань фасада
+  const fGrad=ctx.createLinearGradient(cx,topY+tDepth,cx,topY+tDepth+tH);
+  fGrad.addColorStop(0,'#c8a070'); fGrad.addColorStop(0.6,'#a87840'); fGrad.addColorStop(1,'#7a5020');
+  ctx.fillStyle=fGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx-tW/2-sk, topY+tDepth);
+  ctx.lineTo(cx+tW/2+sk, topY+tDepth);
+  ctx.lineTo(cx+tW/2+sk, topY+tDepth+tH);
+  ctx.lineTo(cx-tW/2-sk, topY+tDepth+tH);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#7a5010'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // Панели на фасаде
+  ctx.strokeStyle='rgba(255,220,150,0.28)'; ctx.lineWidth=1.2;
+  [-100,-34,34,100].forEach(px=>{
+    ctx.beginPath();ctx.roundRect(cx+px-28,topY+tDepth+14,56,tH-28,4);ctx.stroke();
+  });
+  // Герб по центру фасада
+  ctx.fillStyle='rgba(201,168,76,0.22)';
+  ctx.beginPath(); ctx.arc(cx,topY+tDepth+tH/2,22,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(201,168,76,0.4)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(cx,topY+tDepth+tH/2,22,0,Math.PI*2); ctx.stroke();
+  ctx.font='18px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(201,168,76,0.6)';
+  ctx.fillText('⚖',cx,topY+tDepth+tH/2+1);
+
+  ctx.restore();
+}
+
+// ── Только столешница (рисуется поверх героя) ──────────
+function drawTableTop(cx, topY){
+  const tW=300, tDepth=70, sk=28;
+  ctx.save();
+
+  // Тень под столом
+  ctx.fillStyle='rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(cx, topY+tDepth+125, tW/2+40, 16, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Столешница — верхняя трапеция
+  const tGrad=ctx.createLinearGradient(cx-tW/2,topY,cx-tW/2,topY+tDepth);
+  tGrad.addColorStop(0,'#ddc090'); tGrad.addColorStop(0.5,'#c8a860'); tGrad.addColorStop(1,'#a88040');
+  ctx.fillStyle=tGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx-tW/2,    topY);
+  ctx.lineTo(cx+tW/2,    topY);
+  ctx.lineTo(cx+tW/2+sk, topY+tDepth);
+  ctx.lineTo(cx-tW/2-sk, topY+tDepth);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#8a6020'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // Зелёное сукно
+  const clothGrad=ctx.createLinearGradient(cx-tW/2+10,topY+4,cx-tW/2+10,topY+tDepth-6);
+  clothGrad.addColorStop(0,'#386040'); clothGrad.addColorStop(1,'#2a4830');
+  ctx.fillStyle=clothGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx-tW/2+10,    topY+4);
+  ctx.lineTo(cx+tW/2-10,    topY+4);
+  ctx.lineTo(cx+tW/2-10+sk*0.85, topY+tDepth-6);
+  ctx.lineTo(cx-tW/2+10-sk*0.85, topY+tDepth-6);
+  ctx.closePath(); ctx.fill();
+  // Рамка сукна
+  ctx.strokeStyle='#c9a84c66'; ctx.lineWidth=1; ctx.stroke();
+
+  // Книги на столе (стопка слева)
+  const bkX=cx-80, bkY=topY+6;
+  [[14,'#8B1A1A'],[12,'#1A3A6B'],[10,'#1A5C2A']].forEach(([bh,bc],i)=>{
+    ctx.fillStyle=bc;
+    ctx.beginPath();
+    ctx.moveTo(bkX-18,    bkY-i*bh+2);
+    ctx.lineTo(bkX+18,    bkY-i*bh+2);
+    ctx.lineTo(bkX+18+4,  bkY-i*bh+bh+4);
+    ctx.lineTo(bkX-18-4,  bkY-i*bh+bh+4);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=0.8; ctx.stroke();
+  });
+  // Фемида справа
+  const fX=cx+85, fY=topY+8;
+  // Постамент
+  ctx.fillStyle='#c8a060';
+  ctx.fillRect(fX-10,fY+28,20,10);
+  ctx.fillRect(fX-8, fY+20,16,10);
+  // Фигура (силуэт)
+  ctx.fillStyle='#d4c090';
+  // Тело
+  ctx.beginPath();
+  ctx.moveTo(fX-7,fY+20);
+  ctx.quadraticCurveTo(fX-9,fY+10,fX-4,fY+2);
+  ctx.lineTo(fX+4,fY+2);
+  ctx.quadraticCurveTo(fX+9,fY+10,fX+7,fY+20);
+  ctx.closePath(); ctx.fill();
+  // Голова
+  ctx.beginPath(); ctx.arc(fX,fY,6,0,Math.PI*2); ctx.fill();
+  // Весы
+  ctx.strokeStyle='#c9a84c'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(fX-12,fY+5);ctx.lineTo(fX+12,fY+5);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(fX,fY+2);ctx.lineTo(fX,fY+8);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(fX-12,fY+5);ctx.lineTo(fX-14,fY+11);ctx.lineTo(fX-10,fY+11);ctx.closePath();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(fX+12,fY+5);ctx.lineTo(fX+14,fY+11);ctx.lineTo(fX+10,fY+11);ctx.closePath();ctx.stroke();
+  // Повязка на глазах
+  ctx.fillStyle='#c8a060';
+  ctx.fillRect(fX-5,fY-1,10,3);
+
+  ctx.restore();
+}
+
+// ── Герой в финальной анимации ─────────────────────────
+function drawWinHero(ax, ay, waveAngle, hammerT, sitting, benchY){
+  ctx.save();
+
+  if(!sitting){
+    // Ноги — прыжок/ходьба
+    ctx.strokeStyle='#22223a'; ctx.lineWidth=4; ctx.lineCap='round';
+    const legSway = waveAngle*0.4;
+    ctx.beginPath();ctx.moveTo(ax-6,ay-4);ctx.lineTo(ax-8+legSway*8,ay+14);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ax+6,ay-4);ctx.lineTo(ax+8-legSway*8,ay+14);ctx.stroke();
+    ctx.fillStyle='#111';
+    ctx.beginPath();ctx.ellipse(ax-8+legSway*8,ay+15,5,3,legSway*0.3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(ax+8-legSway*8,ay+15,5,3,-legSway*0.3,0,Math.PI*2);ctx.fill();
+  }
+
+  // Мантия
+  ctx.fillStyle='#12122a';
+  ctx.beginPath();
+  ctx.moveTo(ax-18,ay-2);ctx.lineTo(ax-13,ay-36);ctx.lineTo(ax+13,ay-36);ctx.lineTo(ax+18,ay-2);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#2a2a50'; ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(ax-10,ay-34);ctx.lineTo(ax-14,ay-4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ax+10,ay-34);ctx.lineTo(ax+14,ay-4);ctx.stroke();
+
+  // Жабо
+  ctx.fillStyle='#f0ece0';
+  ctx.beginPath();
+  ctx.moveTo(ax-7,ay-36);ctx.quadraticCurveTo(ax-4,ay-28,ax,ay-25);
+  ctx.quadraticCurveTo(ax+4,ay-28,ax+7,ay-36);ctx.closePath();ctx.fill();
+
+  // Руки
+  let lHx,lHy,rHx,rHy;
+  if(sitting && hammerT>0){
+    // Правая рука — поднята с молотком (замах → удар)
+    const swing = Math.sin(hammerT*Math.PI); // 0→1→0
+    rHx = ax+16; rHy = ay-28-swing*18;
+    lHx = ax-20; lHy = ay-18;
+  } else if(waveAngle!==0){
+    // Обе машут в разные стороны
+    lHx = ax-22+Math.cos(-0.5+waveAngle+1.2)*20;
+    lHy = ay-16-Math.sin(-0.5+waveAngle+1.2)*26;
+    rHx = ax+22-Math.cos(0.5+waveAngle+1.2)*20;
+    rHy = ay-16-Math.sin(0.5+waveAngle+1.2)*26;
+  } else {
+    lHx=ax-22; lHy=ay-16;
+    rHx=ax+22; rHy=ay-16;
+  }
+
+  ctx.strokeStyle='#12122a'; ctx.lineWidth=4; ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(ax-13,ay-26);ctx.lineTo(lHx,lHy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ax+13,ay-26);ctx.lineTo(rHx,rHy);ctx.stroke();
+
+  // Кисти
+  ctx.fillStyle='#f5c8a0';
+  ctx.beginPath();ctx.arc(lHx,lHy,3.5,0,Math.PI*2);ctx.fill();
+
+  // Молоток в правой руке при ударе
+  if(sitting && hammerT>0){
+    ctx.save();
+    const swing = Math.sin(hammerT*Math.PI);
+    const hamAngle = -1.2+swing*2.2; // замах → удар → откат
+    ctx.translate(rHx, rHy);
+    ctx.rotate(hamAngle);
+    ctx.strokeStyle='#8B5E3C'; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,18);ctx.stroke();
+    const hG=ctx.createLinearGradient(-10,-6,10,-6);
+    hG.addColorStop(0,'#c9a84c');hG.addColorStop(0.5,'#f0d878');hG.addColorStop(1,'#7a5a18');
+    ctx.fillStyle=hG;
+    ctx.beginPath();ctx.roundRect(-11,-10,22,8,2);ctx.fill();
+    ctx.strokeStyle='#8a6020'; ctx.lineWidth=0.8; ctx.stroke();
+    // Искры при ударе
+    if(hammerT>0.45 && hammerT<0.7){
+      const sp=(hammerT-0.45)/0.25;
+      for(let i=0;i<8;i++){
+        const sa=i/8*Math.PI*2+sp;
+        ctx.strokeStyle=`rgba(255,230,60,${0.9-sp})`;
+        ctx.lineWidth=1.8;
+        ctx.beginPath();ctx.moveTo(0,8);
+        ctx.lineTo(Math.cos(sa)*16*sp,8+Math.sin(sa)*10*sp);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  } else {
+    ctx.fillStyle='#f5c8a0';
+    ctx.beginPath();ctx.arc(rHx,rHy,3.5,0,Math.PI*2);ctx.fill();
+  }
+
+  // Голова
+  ctx.fillStyle='#f5c8a0';
+  ctx.fillRect(ax-4,ay-44,8,8);
+  ctx.beginPath();ctx.ellipse(ax,ay-50,10,12,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e8b090';
+  ctx.beginPath();ctx.ellipse(ax-10,ay-50,3,4,-0.3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(ax+10,ay-50,3,4,0.3,0,Math.PI*2);ctx.fill();
+
+  // Парик — до уровня воротника
+  ctx.fillStyle='#e8e4d8';
+  ctx.beginPath();
+  ctx.moveTo(ax-8,ay-60);ctx.bezierCurveTo(ax-18,ay-56,ax-20,ay-48,ax-18,ay-42);
+  ctx.bezierCurveTo(ax-20,ay-38,ax-16,ay-37,ax-18,ay-37);
+  ctx.lineTo(ax-10,ay-37);ctx.bezierCurveTo(ax-10,ay-37,ax-8,ay-40,ax-10,ay-42);
+  ctx.bezierCurveTo(ax-8,ay-48,ax-6,ay-55,ax-8,ay-60);
+  ctx.closePath();ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(ax+8,ay-60);ctx.bezierCurveTo(ax+18,ay-56,ax+20,ay-48,ax+18,ay-42);
+  ctx.bezierCurveTo(ax+20,ay-38,ax+16,ay-37,ax+18,ay-37);
+  ctx.lineTo(ax+10,ay-37);ctx.bezierCurveTo(ax+10,ay-37,ax+8,ay-40,ax+10,ay-42);
+  ctx.bezierCurveTo(ax+8,ay-48,ax+6,ay-55,ax+8,ay-60);
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#c8c0a8';ctx.lineWidth=1;ctx.lineCap='round';
+  for(let i=0;i<3;i++){
+    const ox=-18+i*4;
+    ctx.beginPath();ctx.moveTo(ax+ox,ay-57);ctx.quadraticCurveTo(ax+ox-3,ay-50,ax+ox,ay-44);
+    ctx.quadraticCurveTo(ax+ox+2,ay-40,ax+ox,ay-37);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ax-ox,ay-57);ctx.quadraticCurveTo(ax-ox+3,ay-50,ax-ox,ay-44);
+    ctx.quadraticCurveTo(ax-ox-2,ay-40,ax-ox,ay-37);ctx.stroke();
+  }
+
+  // Глаза
+  if(waveAngle!==0){
+    ctx.strokeStyle='#2a1a0a';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(ax-4,ay-51,3,Math.PI+0.3,Math.PI*2-0.3);ctx.stroke();
+    ctx.beginPath();ctx.arc(ax+4,ay-51,3,Math.PI+0.3,Math.PI*2-0.3);ctx.stroke();
+  } else {
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.ellipse(ax-4,ay-51,2.8,3.2,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(ax+4,ay-51,2.8,3.2,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#2a1a0a';
+    ctx.beginPath();ctx.arc(ax-3.5,ay-51,1.8,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(ax+4.5,ay-51,1.8,0,Math.PI*2);ctx.fill();
+  }
+
+  // Улыбка
+  ctx.strokeStyle='#8b2010';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(ax,ay-45,5,0.1,Math.PI-0.1);ctx.stroke();
+
+  // Шапочка
+  const hTW=28,hBW=8,hTH=12,hTop=ay-75;
+  ctx.fillStyle='#12122a';
+  ctx.fillRect(ax-hTW,hTop,hTW*2,4);
+  ctx.fillStyle='#1a1a32';
+  ctx.beginPath();
+  ctx.moveTo(ax-hTW,hTop+4);ctx.lineTo(ax+hTW,hTop+4);
+  ctx.lineTo(ax+hBW,hTop+4+hTH);ctx.lineTo(ax-hBW,hTop+4+hTH);
+  ctx.closePath();ctx.fill();
+
+  ctx.restore();
+}
+
+function endGame(win){
+  gameRunning=false;
+  // Захватываем счёт сразу — до любого сброса
+  const finalScore = (typeof score==='number' && !isNaN(score)) ? score : 0;
+  if(win){
+    document.getElementById('message').style.display='none';
+    startWinAnimation(finalScore);
+  } else {
+    const msg=document.getElementById('message');
+    msg.style.display='block';
+    msg.innerHTML=`<h2>⚖ ДЕЛО ЗАКРЫТО</h2>`
+      +`<p>Адвокат не выдержал</p>`
+      +`<p style="color:#c9a84c;font-size:1.4rem;margin-top:10px;font-family:'Playfair Display',serif">Счёт: ${finalScore}</p>`
+      +`<button id="startBtn" onclick="startGame()">АПЕЛЛЯЦИЯ</button>`;
+  }
+}
+
+// ── Dev panel: долгий тап на заголовке ──────────────
+(function(){
+  const trigger = document.getElementById('devTrigger');
+  const panel   = document.getElementById('devPanel');
+  const btns    = document.getElementById('devBtns');
+  let holdTimer = null;
+
+  // Генерируем кнопки уровней
+  for(let i=2;i<=10;i++){
+    const b=document.createElement('button');
+    b.className='devBtn';
+    b.textContent='Уровень '+i;
+    b.onclick=(function(lvl){ return function(){
+      closeDevPanel();
+      startGame(lvl);
+    };})(i);
+    btns.appendChild(b);
+  }
+
+  function openDevPanel(){
+    panel.style.display='block';
+  }
+  window.closeDevPanel=function(){
+    panel.style.display='none';
+  };
+
+  // Долгий тап / долгое нажатие — 600мс
+  trigger.addEventListener('pointerdown',()=>{
+    holdTimer=setTimeout(openDevPanel, 600);
+  });
+  trigger.addEventListener('pointerup',  ()=>clearTimeout(holdTimer));
+  trigger.addEventListener('pointerleave',()=>clearTimeout(holdTimer));
+
+  // Закрыть по тапу вне панели
+  document.addEventListener('pointerdown', e=>{
+    if(panel.style.display==='block' && !panel.contains(e.target) && e.target!==trigger){
+      closeDevPanel();
+    }
+  });
+})();
+</script>
+</body>
+</html>
